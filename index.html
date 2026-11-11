@@ -86,6 +86,12 @@ main{padding:6px 16px 24px;max-width:560px;margin:0 auto}
 .love{background:var(--green-soft);border-radius:18px;padding:14px 16px;margin-bottom:14px}
 .love p{margin:0;font-size:15px;line-height:1.45;color:var(--text)}
 .love span{display:block;margin-top:6px;font-size:13px;font-weight:600;color:var(--green-ink)}
+.love.special{background:var(--green);color:#fff;padding:18px;box-shadow:var(--shadow)}
+.love.special h3{margin:0 0 6px;font-size:19px;letter-spacing:-.01em}
+.love.special p{color:#fff;opacity:.95}
+.love.special span{color:#fff;opacity:.85}
+.love.special.big{background:linear-gradient(135deg,#5DBA8A,#24684A);padding:22px 18px;text-align:center}
+.love.special.big h3{font-size:23px}
 .hero{background:var(--green);color:#fff;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
 .hero small{opacity:.85;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .hero h3{margin:6px 0 2px;font-size:21px;letter-spacing:-.01em}
@@ -456,12 +462,48 @@ function dailyMessage(dateStr){
   return `${pick(MSG_A)} ${pick(MSG_B)} ${pick(MSG_C)}`;
 }
 
+/* ---------- namoro: começou em 11/12/2022; todo dia 11 é especial ---------- */
+const START = {y:2022, m:12, d:11};
+const MONTHLY_LINES = [
+  'Obrigado por cada dia ao seu lado.',
+  'Cada mês com você é melhor que o anterior.',
+  'Que venham muitos e muitos meses juntos.',
+  'Você é a melhor coisa que me aconteceu.',
+  'Eu te escolho de novo, todo mês.',
+  'Amo a nossa história.',
+];
+function togetherText(months){
+  const y = Math.floor(months / 12), m = months % 12, parts = [];
+  if(y) parts.push(`${y} ano${y>1?'s':''}`);
+  if(m) parts.push(`${m} ${m>1?'meses':'mês'}`);
+  return parts.join(' e ');
+}
+function specialDay(dateStr){
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if(d !== START.d) return null;
+  const months = (y - START.y) * 12 + (m - START.m);
+  if(months <= 0) return null;
+  const line = MONTHLY_LINES[months % MONTHLY_LINES.length];
+  if(months % 12 === 0) return {
+    big: true,
+    title: `Feliz ${months/12} ano${months>12?'s':''} de namoro! 🎉`,
+    text: `Hoje fazemos ${togetherText(months)} juntos, meu amor. Obrigado por cada dia, cada risada e cada momento. Te amo infinito. 💚`,
+  };
+  return {
+    title: 'Feliz mêsversário, amor! 💚',
+    text: `Hoje fazemos ${togetherText(months)} de namoro. ${line} Te amo!`,
+  };
+}
+
 function render(){
   const br = brNow();
   $('#greeting').textContent = `${greeting(br.hour)}, Julha 💚`;
   const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, historico:renderHistory};
   if(!views[ui.tab]) ui.tab = 'agenda';
-  const love = `<div class="love"><p>${esc(dailyMessage(br.date))}</p><span>— do seu namorado, Lucas</span></div>`;
+  const sp = specialDay(br.date);
+  const love = sp
+    ? `<div class="love special ${sp.big?'big':''}"><h3>${esc(sp.title)}</h3><p>${esc(sp.text)}</p><span>— do seu namorado, Lucas</span></div>`
+    : `<div class="love"><p>${esc(dailyMessage(br.date))}</p><span>— do seu namorado, Lucas</span></div>`;
   $('#main').innerHTML = love + views[ui.tab]();
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   $('#fab').style.display = ui.tab === 'tarefas' ? 'none' : '';
