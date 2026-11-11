@@ -1,6 +1,6 @@
 // Guarda o app no celular para abrir mesmo sem internet.
 // Busca sempre a versão nova primeiro; se estiver offline, usa a cópia salva.
-const CACHE = 'julhatasks-v5';
+const CACHE = 'julhatasks-v6';
 const ASSETS = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
