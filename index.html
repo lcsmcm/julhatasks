@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F7F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1612" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="JulhaTasks">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>JulhaTasks</title>
+<style>
+:root{
+  --bg:#F4F7F4; --surface:#FFFFFF; --surface2:#EDF4EF; --text:#1D2B23; --muted:#748178; --line:#E2E9E4;
+  --green:#2F7D55; --green-soft:#DDEFE4; --green-ink:#1F5C3D; --danger:#C2554F;
+  --shadow:0 1px 2px rgba(20,40,30,.05),0 6px 20px rgba(20,40,30,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0F1612;--surface:#17211B;--surface2:#1D2A22;--text:#E6EEE8;--muted:#8F9C94;--line:#26332B;
+    --green:#4FB37F;--green-soft:#1E3A2B;--green-ink:#A3E0BD;--danger:#E07A73;--shadow:none}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+body{min-height:100vh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body.lock{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
+
+header{position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:calc(env(safe-area-inset-top) + 14px) 20px 10px;display:flex;align-items:center;justify-content:space-between;
+  max-width:560px;margin:0 auto}
+.brand h1{margin:0;font-size:28px;letter-spacing:-.03em;font-weight:750}
+.brand h1 span{color:var(--green)}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:none;background:var(--surface);box-shadow:var(--shadow);
+  display:grid;place-items:center;color:var(--muted);flex:none}
+.icon-btn svg{width:20px;height:20px}
+
+main{padding:6px 16px 24px;max-width:560px;margin:0 auto}
+.card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:14px}
+.section-title{display:flex;align-items:baseline;justify-content:space-between;margin:22px 4px 8px;
+  font-size:13px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.section-title small{text-transform:none;letter-spacing:0;font-weight:500}
+.hint{color:var(--muted);font-size:13px;margin:-4px 4px 8px}
+.empty{text-align:center;color:var(--muted);font-size:15px;padding:26px 12px}
+.empty b{display:block;font-size:28px;margin-bottom:6px}
+
+/* calendário */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-head h2{margin:0;font-size:18px;font-weight:650;text-transform:capitalize}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{border:none;background:var(--surface2);border-radius:12px;height:34px;min-width:34px;padding:0 10px;font-size:14px;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-wd{font-size:12px;color:var(--muted);font-weight:600;padding:4px 0 6px}
+.day{border:none;background:none;border-radius:12px;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0}
+.day span{font-size:15px;width:30px;height:30px;line-height:30px;border-radius:50%}
+.day b{display:flex;gap:2px;height:5px}
+.day b i{width:5px;height:5px;border-radius:50%;display:block}
+.day.today span{color:var(--green);font-weight:750}
+.day.sel span{background:var(--green);color:#fff;font-weight:650}
+
+/* itens */
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.check{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #B9C6BE;background:none;padding:0;position:relative;transition:all .15s}
+.done .check{background:var(--green);border-color:var(--green)}
+.done .check::after{content:"";position:absolute;left:8px;top:3px;width:6px;height:12px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.item-body{flex:1;min-width:0;cursor:pointer}
+.item-title{font-size:16px;line-height:1.3;display:flex;align-items:center;gap:8px}
+.item-title .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{flex:none;width:8px;height:8px;border-radius:50%}
+.item-sub{font-size:13px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.done .item-title .t{text-decoration:line-through;color:var(--muted)}
+.pill{flex:none;font-size:12px;font-weight:650;color:var(--green-ink);background:var(--green-soft);padding:4px 9px;border-radius:999px}
+.star{flex:none;border:none;background:none;font-size:20px;padding:4px;color:#C7D0CA;line-height:1}
+.star.on{color:#E2A93B}
+
+/* destaque */
+.hero{background:var(--green);color:#fff;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.hero small{opacity:.85;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.hero h3{margin:6px 0 2px;font-size:21px;letter-spacing:-.01em}
+.hero p{margin:0;opacity:.9;font-size:14px}
+.hero .big{font-size:40px;font-weight:750;letter-spacing:-.03em;line-height:1;margin-top:14px}
+.hero .big span{font-size:15px;font-weight:600;opacity:.9;letter-spacing:0}
+
+/* tarefas */
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;outline:none}
+.add-row input:focus{border-color:var(--green)}
+.add-row button{border:none;background:var(--green);color:#fff;border-radius:14px;padding:0 16px;font-weight:650}
+.link{border:none;background:none;color:var(--green);font-weight:600;font-size:13px;padding:0;text-transform:none;letter-spacing:0}
+
+/* histórico */
+.years{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none}
+.years::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+.stat-big{font-size:44px;font-weight:750;letter-spacing:-.03em;line-height:1}
+.stat-big span{font-size:16px;font-weight:600;color:var(--muted);letter-spacing:0}
+.bar{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--green);border-radius:99px}
+.cat-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:14px;margin-top:10px}
+.cat-row .bar{margin:0;height:6px}
+
+/* abas */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:space-around}
+.tab{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);padding:6px 10px;min-width:64px}
+.tab svg{width:24px;height:24px}
+.tab.on{color:var(--green)}
+.fab{position:fixed;right:20px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;width:58px;height:58px;border-radius:50%;
+  border:none;background:var(--green);color:#fff;font-size:32px;line-height:1;box-shadow:0 8px 24px rgba(47,125,85,.35);display:grid;place-items:center}
+.fab svg{width:26px;height:26px}
+
+/* painel inferior */
+.sheet{position:fixed;inset:0;z-index:20;pointer-events:none}
+.sheet .backdrop{position:absolute;inset:0;background:rgba(10,20,15,.35);opacity:0;transition:opacity .2s}
+.sheet .panel{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;
+  padding:10px 20px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;transform:translateY(100%);transition:transform .25s ease}
+.sheet.open{pointer-events:auto}
+.sheet.open .backdrop{opacity:1}
+.sheet.open .panel{transform:none}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 12px}
+.sheet h2{margin:0 0 14px;font-size:20px}
+.field{display:block;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--muted)}
+.field input,.field textarea{display:block;width:100%;margin-top:6px;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;outline:none;font-weight:400;-webkit-appearance:none;appearance:none;min-height:46px}
+.field textarea{resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--green)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+.cats label{position:relative}
+.cats input{position:absolute;opacity:0;pointer-events:none}
+.cats span{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:14px;font-weight:500;color:var(--text);background:var(--bg)}
+.cats input:checked + span{border-color:var(--green);background:var(--green-soft);color:var(--green-ink);font-weight:650}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:var(--bg);margin-bottom:14px}
+.switch div{font-size:15px;font-weight:600}
+.switch small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px}
+.switch input{-webkit-appearance:none;appearance:none;flex:none;width:50px;height:30px;border-radius:99px;background:#C9D3CC;position:relative;transition:background .2s;margin:0}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked{background:var(--green)}
+.switch input:checked::after{transform:translateX(20px)}
+.actions{display:flex;gap:10px;margin-top:6px}
+.btn{flex:1;border:none;border-radius:14px;padding:14px;font-weight:650;font-size:16px}
+.btn.primary{background:var(--green);color:#fff}
+.btn.ghost{background:var(--bg);color:var(--text)}
+.btn.danger{color:var(--danger);flex:0 0 auto;padding:14px 18px}
+.menu-btn{display:flex;align-items:center;gap:12px;width:100%;border:none;background:var(--bg);border-radius:14px;padding:14px;margin-bottom:10px;text-align:left;font-size:16px;font-weight:600}
+.menu-btn small{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
+.about{font-size:14px;color:var(--muted);line-height:1.5}
+.about ol{padding-left:20px;margin:6px 0}
+
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);z-index:30;
+  background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Julha<span>Tasks</span></h1>
+    <p id="greeting"></p>
+  </div>
+  <button class="icon-btn" data-act="settings" aria-label="Ajustes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+  </button>
+</header>
+
+<main id="main"></main>
+
+<button class="fab" id="fab" data-act="new-ev" aria-label="Novo evento">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<nav class="tabs">
+  <button class="tab" data-act="tab" data-tab="agenda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Agenda</button>
+  <button class="tab" data-act="tab" data-tab="proximos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Próximos</button>
+  <button class="tab" data-act="tab" data-tab="tarefas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/></svg>Tarefas</button>
+  <button class="tab" data-act="tab" data-tab="historico">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Histórico</button>
+</nav>
+
+<div class="sheet" id="sheet">
+  <div class="backdrop" data-act="close-sheet"></div>
+  <div class="panel"><div class="grab"></div><div id="sheetBody"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+/* ---------- dados ---------- */
+const CATS = {
+  aniversario:{label:'Aniversário', emoji:'🎂', color:'#D9A441'},
+  passeio:    {label:'Passeio',     emoji:'💚', color:'#3E9B6B'},
+  compromisso:{label:'Compromisso', emoji:'📌', color:'#4C7FB8'},
+  saude:      {label:'Saúde',       emoji:'🩺', color:'#C9625C'},
+  trabalho:   {label:'Trabalho',    emoji:'💼', color:'#8A72B8'},
+  outro:      {label:'Outro',       emoji:'✨', color:'#8A958E'},
+};
+const KEY = 'julhatasks.v1';
+const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const MONTHS_S = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const WEEK = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+
+let state = load();
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if(s && Array.isArray(s.events)) return {events:s.events, tasks:Array.isArray(s.tasks)?s.tasks:[]};
+  }catch(e){}
+  return {events:[], tasks:[]};
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ toast('Não consegui salvar 😕'); }
+}
+try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
+
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const todayStr = () => ymd(new Date());
+const dayDiff = (a,b) => Math.round((parse(b)-parse(a))/86400000);
+const isLeap = y => (y%4===0 && y%100!==0) || y%400===0;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cat = ev => CATS[ev.cat] || CATS.outro;
+const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MONTHS_S[d.getMonth()]}`; };
+const fmtLong = s => { const d = parse(s); return `${WEEK[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`; };
+const countdown = n => n===0 ? 'hoje' : n===1 ? 'amanhã' : `em ${n} dias`;
+
+/* Um evento "todo ano" gera uma ocorrência em cada ano a partir do ano em que foi criado */
+function occFor(ev, year){
+  const [y,m,d] = ev.date.split('-').map(Number);
+  if(!ev.yearly) return y===year ? [{ev, date:ev.date, year, done:!!ev.done}] : [];
+  if(year < y) return [];
+  const dd = (m===2 && d===29 && !isLeap(year)) ? 28 : d;
+  return [{ev, date:`${year}-${pad(m)}-${pad(dd)}`, year, done:(ev.doneYears||[]).includes(year)}];
+}
+const cmpOcc = (a,b) => a.date.localeCompare(b.date) || (a.ev.time||'99').localeCompare(b.ev.time||'99');
+const occInYear = year => state.events.flatMap(e => occFor(e, year)).sort(cmpOcc);
+
+/* ---------- estado da tela ---------- */
+const now = new Date();
+const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), showDone:false };
+try{ const t = localStorage.getItem('julhatasks.tab'); if(t) ui.tab = t; }catch(e){}
+
+/* ---------- linhas ---------- */
+function occRow(o, opts={}){
+  const c = cat(o.ev), sub = [];
+  if(opts.showDate) sub.push(fmtShort(o.date));
+  if(o.ev.time) sub.push(o.ev.time);
+  if(o.ev.yearly) sub.push('todo ano');
+  if(o.ev.note) sub.push(esc(o.ev.note));
+  return `<div class="item ${o.done?'done':''}" data-id="${o.ev.id}" data-year="${o.year}">
+    <button class="check" data-act="toggle-ev" aria-label="Marcar como feito"></button>
+    <div class="item-body" data-act="edit-ev">
+      <div class="item-title"><span class="dot" style="background:${c.color}"></span><span class="t">${esc(o.ev.title)}</span></div>
+      <div class="item-sub">${c.emoji} ${sub.length ? sub.join(' · ') : c.label}</div>
+    </div>
+    ${opts.right || ''}
+  </div>`;
+}
+function taskRow(t){
+  return `<div class="item ${t.done?'done':''}" data-tid="${t.id}">
+    <button class="check" data-act="toggle-task" aria-label="Concluir tarefa"></button>
+    <div class="item-body" data-act="edit-task">
+      <div class="item-title"><span class="t">${esc(t.title)}</span></div>
+      ${t.note ? `<div class="item-sub">${esc(t.note)}</div>` : ''}
+    </div>
+    ${t.done ? '' : `<button class="star ${t.important?'on':''}" data-act="star-task" aria-label="Importante">★</button>`}
+  </div>`;
+}
+
+/* ---------- telas ---------- */
+function renderAgenda(){
+  const {y, m} = ui, t = todayStr();
+  const byDay = {};
+  occInYear(y).forEach(o => { if(+o.date.slice(5,7) === m+1) (byDay[o.date] ??= []).push(o); });
+  const first = new Date(y,m,1).getDay(), days = new Date(y,m+1,0).getDate();
+  let cells = ['D','S','T','Q','Q','S','S'].map(w => `<div class="cal-wd">${w}</div>`).join('');
+  for(let i=0;i<first;i++) cells += '<div></div>';
+  for(let d=1; d<=days; d++){
+    const ds = `${y}-${pad(m+1)}-${pad(d)}`;
+    const dots = (byDay[ds]||[]).slice(0,3).map(o => `<i style="background:${cat(o.ev).color};${o.done?'opacity:.35':''}"></i>`).join('');
+    cells += `<button class="day ${ds===t?'today':''} ${ds===ui.sel?'sel':''}" data-act="pick" data-date="${ds}"><span>${d}</span><b>${dots}</b></button>`;
+  }
+  const selList = occInYear(+ui.sel.slice(0,4)).filter(o => o.date === ui.sel);
+  return `
+  <div class="card">
+    <div class="cal-head">
+      <h2>${MONTHS[m]} ${y}</h2>
+      <div class="cal-nav">
+        <button data-act="month" data-d="-1" aria-label="Mês anterior">‹</button>
+        <button data-act="today">Hoje</button>
+        <button data-act="month" data-d="1" aria-label="Próximo mês">›</button>
+      </div>
+    </div>
+    <div class="cal-grid">${cells}</div>
+  </div>
+  <div class="section-title">${fmtLong(ui.sel)}${ui.sel===t?' <small>hoje</small>':''}</div>
+  <div class="card">
+    ${selList.length ? `<div class="list">${selList.map(o => occRow(o)).join('')}</div>`
+      : `<div class="empty"><b>🌿</b>Nada marcado neste dia.<br>Toque no + para adicionar.</div>`}
+  </div>`;
+}
+
+function renderUpcoming(){
+  const t = todayStr(), y = new Date().getFullYear();
+  const all = [...occInYear(y-1), ...occInYear(y), ...occInYear(y+1)];
+  const pend = all.filter(o => o.date < t && !o.done && dayDiff(o.date, t) <= 60);
+  const hoje = all.filter(o => o.date === t);
+  const next = all.filter(o => o.date > t && dayDiff(t, o.date) <= 365);
+  const feat = next.find(o => !o.done);
+  let html = '';
+  if(feat){
+    const n = dayDiff(t, feat.date);
+    html += `<div class="hero" data-id="${feat.ev.id}" data-year="${feat.year}" data-act="edit-ev">
+      <small>Próximo evento</small>
+      <h3>${cat(feat.ev).emoji} ${esc(feat.ev.title)}</h3>
+      <p>${fmtLong(feat.date)}${feat.ev.time ? ' · '+feat.ev.time : ''}</p>
+      <div class="big">${n===1 ? 'Amanhã' : n+' <span>dias</span>'}</div>
+    </div>`;
+  }
+  if(pend.length){
+    html += `<div class="section-title">Pendentes</div><p class="hint">Já passaram — marque o que você fez.</p>
+      <div class="card"><div class="list">${pend.map(o => occRow(o,{showDate:true})).join('')}</div></div>`;
+  }
+  html += `<div class="section-title">Hoje</div><div class="card">${hoje.length
+    ? `<div class="list">${hoje.map(o => occRow(o)).join('')}</div>`
+    : `<div class="empty" style="padding:14px">Nada para hoje 🌱</div>`}</div>`;
+  const groups = {};
+  next.forEach(o => (groups[o.date.slice(0,7)] ??= []).push(o));
+  Object.keys(groups).forEach(k => {
+    const [gy, gm] = k.split('-').map(Number);
+    html += `<div class="section-title">${MONTHS[gm-1]}${gy!==y?' '+gy:''}</div>
+      <div class="card"><div class="list">${groups[k].map(o => occRow(o,{showDate:true, right:`<span class="pill">${countdown(dayDiff(t,o.date))}</span>`})).join('')}</div></div>`;
+  });
+  if(!next.length && !hoje.length && !pend.length)
+    html += `<div class="card" style="margin-top:12px"><div class="empty"><b>📅</b>Nenhum evento pela frente.<br>Toque no + para criar o primeiro.</div></div>`;
+  return html;
+}
+
+function renderTasks(){
+  const pending = state.tasks.filter(t => !t.done).sort((a,b) => (b.important?1:0)-(a.important?1:0) || a.created - b.created);
+  const done = state.tasks.filter(t => t.done).sort((a,b) => (b.doneAt||0)-(a.doneAt||0));
+  return `
+  <form class="add-row" id="taskForm" autocomplete="off">
+    <input name="title" placeholder="Nova tarefa…" maxlength="140" enterkeyhint="done">
+    <button type="submit">Adicionar</button>
+  </form>
+  <div class="section-title">A fazer <small>${pending.length}</small></div>
+  <div class="card">${pending.length
+    ? `<div class="list">${pending.map(taskRow).join('')}</div>`
+    : `<div class="empty"><b>✅</b>Tudo em dia!</div>`}</div>
+  ${done.length ? `
+  <div class="section-title">Concluídas <small>${done.length}</small>
+    <span><button class="link" data-act="toggle-done-list">${ui.showDone?'Ocultar':'Mostrar'}</button>
+    ${ui.showDone ? ` · <button class="link" data-act="clear-done">Limpar</button>` : ''}</span></div>
+  ${ui.showDone ? `<div class="card"><div class="list">${done.map(taskRow).join('')}</div></div>` : ''}` : ''}`;
+}
+
+function renderHistory(){
+  const cy = new Date().getFullYear();
+  const years = new Set([cy]);
+  state.events.forEach(e => {
+    const y0 = +e.date.slice(0,4);
+    if(e.yearly){ for(let y=y0; y<=cy; y++) years.add(y); } else years.add(y0);
+  });
+  const ylist = [...years].sort((a,b) => b-a);
+  const occ = occInYear(ui.hy);
+  const t = todayStr();
+  const relevant = occ.filter(o => o.date <= t || o.done);
+  const done = occ.filter(o => o.done);
+  const pct = relevant.length ? Math.round(done.length / relevant.length * 100) : 0;
+  const byCat = {};
+  done.forEach(o => byCat[o.ev.cat] = (byCat[o.ev.cat]||0) + 1);
+  const max = Math.max(1, ...Object.values(byCat));
+  const catRows = Object.keys(CATS).filter(k => byCat[k]).map(k =>
+    `<div class="cat-row"><span>${CATS[k].emoji} ${CATS[k].label}</span><div class="bar"><i style="width:${byCat[k]/max*100}%;background:${CATS[k].color}"></i></div><b>${byCat[k]}</b></div>`).join('');
+  const months = {};
+  occ.forEach(o => (months[+o.date.slice(5,7)] ??= []).push(o));
+  return `
+  <div class="years">${ylist.map(y => `<button class="chip ${y===ui.hy?'on':''}" data-act="year" data-y="${y}">${y}</button>`).join('')}</div>
+  <div class="card" style="margin-top:8px">
+    <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:8px">Retrospectiva ${ui.hy}</div>
+    <div class="stat-big">${done.length} <span>evento${done.length===1?'':'s'} concluído${done.length===1?'':'s'}</span></div>
+    ${relevant.length ? `<div class="bar"><i style="width:${pct}%"></i></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">${pct}% do que já passou foi marcado como feito</div>` : ''}
+    ${catRows}
+  </div>
+  ${Object.keys(months).length ? Object.keys(months).sort((a,b) => a-b).map(mm => `
+    <div class="section-title">${MONTHS[mm-1]} <small>${months[mm].filter(o => o.done).length}/${months[mm].length}</small></div>
+    <div class="card"><div class="list">${months[mm].map(o => occRow(o,{showDate:true})).join('')}</div></div>`).join('')
+  : `<div class="card" style="margin-top:12px"><div class="empty"><b>📖</b>Nenhum evento em ${ui.hy}.</div></div>`}`;
+}
+
+function render(){
+  const h = new Date().getHours();
+  $('#greeting').textContent = `${h<5?'Boa noite':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}, Julha 💚`;
+  const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, historico:renderHistory};
+  if(!views[ui.tab]) ui.tab = 'agenda';
+  $('#main').innerHTML = views[ui.tab]();
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
+  $('#fab').style.display = ui.tab === 'tarefas' ? 'none' : '';
+}
+
+/* ---------- painel inferior ---------- */
+function openSheet(html){
+  $('#sheetBody').innerHTML = html;
+  $('#sheet').classList.add('open');
+  document.body.classList.add('lock');
+}
+function closeSheet(){
+  $('#sheet').classList.remove('open');
+  document.body.classList.remove('lock');
+}
+
+function eventForm(ev){
+  const isNew = !ev;
+  ev = ev || {title:'', date: ui.tab==='agenda' ? ui.sel : todayStr(), time:'', cat:'compromisso', yearly:false, note:''};
+  return `<form id="evForm" data-id="${isNew?'':ev.id}" autocomplete="off">
+    <h2>${isNew ? 'Novo evento' : 'Editar evento'}</h2>
+    <label class="field">O que é<input name="title" required maxlength="120" value="${esc(ev.title)}" placeholder="Ex.: Aniversário da Ana"></label>
+    <div class="row2">
+      <label class="field">Data<input type="date" name="date" required value="${ev.date}"></label>
+      <label class="field">Horário (opcional)<input type="time" name="time" value="${ev.time||''}"></label>
+    </div>
+    <div class="field" style="margin-bottom:0">Categoria</div>
+    <div class="cats">${Object.entries(CATS).map(([k,c]) =>
+      `<label><input type="radio" name="cat" value="${k}" ${ev.cat===k?'checked':''}><span>${c.emoji} ${c.label}</span></label>`).join('')}</div>
+    <label class="switch"><div>Repetir todo ano<small>Ótimo para aniversários e datas especiais</small></div>
+      <input type="checkbox" name="yearly" ${ev.yearly?'checked':''}></label>
+    <label class="field">Observação<textarea name="note" rows="2" maxlength="300" placeholder="Opcional">${esc(ev.note||'')}</textarea></label>
+    <div class="actions">
+      ${isNew ? `<button type="button" class="btn ghost" data-act="close-sheet">Cancelar</button>` : `<button type="button" class="btn ghost danger" data-act="delete-ev">Excluir</button>`}
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>`;
+}
+
+function taskForm(t){
+  return `<form id="taskEdit" data-tid="${t.id}" autocomplete="off">
+    <h2>Editar tarefa</h2>
+    <label class="field">Tarefa<input name="title" required maxlength="140" value="${esc(t.title)}"></label>
+    <label class="field">Detalhes<textarea name="note" rows="3" maxlength="500" placeholder="Opcional">${esc(t.note||'')}</textarea></label>
+    <label class="switch"><div>Importante<small>Fica no topo da lista</small></div><input type="checkbox" name="important" ${t.important?'checked':''}></label>
+    <div class="actions">
+      <button type="button" class="btn ghost danger" data-act="delete-task">Excluir</button>
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>`;
+}
+
+function settingsSheet(){
+  const nEv = state.events.length, nT = state.tasks.length;
+  return `<h2>Ajustes</h2>
+    <button class="menu-btn" data-act="export">💾<div>Fazer backup<small>Salva um arquivo com tudo (${nEv} eventos, ${nT} tarefas)</small></div></button>
+    <button class="menu-btn" data-act="import">📥<div>Restaurar backup<small>Carrega um arquivo de backup salvo antes</small></div></button>
+    <div class="about">
+      <b>Dica:</b> faça um backup de vez em quando e guarde no iCloud Drive (app Arquivos). Assim nada se perde se você trocar de celular.
+      <p style="margin-top:12px"><b>Instalar no iPhone</b></p>
+      <ol><li>Abra este link no <b>Safari</b></li><li>Toque em <b>Compartilhar</b> (quadrado com seta)</li><li>Escolha <b>Adicionar à Tela de Início</b></li></ol>
+      <p style="text-align:center;margin-top:16px">Feito com 💚 para a Julha</p>
+    </div>`;
+}
+
+/* ---------- backup ---------- */
+async function exportData(){
+  const json = JSON.stringify({app:'JulhaTasks', exportedAt:new Date().toISOString(), events:state.events, tasks:state.tasks}, null, 2);
+  const name = `julhatasks-backup-${todayStr()}.json`;
+  const file = new File([json], name, {type:'application/json'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:name}); return; }
+    catch(e){ if(e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if(!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if(!Array.isArray(data.events)) throw new Error('formato');
+    if(!confirm(`Restaurar backup com ${data.events.length} eventos e ${(data.tasks||[]).length} tarefas? Os dados atuais serão substituídos.`)) return;
+    state = {events:data.events, tasks:Array.isArray(data.tasks) ? data.tasks : []};
+    save(); closeSheet(); render(); toast('Backup restaurado 💚');
+  }catch(err){ toast('Arquivo de backup inválido'); }
+});
+
+let toastTimer;
+function toast(msg){
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ---------- interações ---------- */
+const findEv = el => { const it = el.closest('[data-id]'); return it && {ev: state.events.find(e => e.id === it.dataset.id), year: +it.dataset.year}; };
+const findTask = el => { const it = el.closest('[data-tid]'); return it && state.tasks.find(t => t.id === it.dataset.tid); };
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const act = el.dataset.act;
+  switch(act){
+    case 'tab':
+      ui.tab = el.dataset.tab; try{ localStorage.setItem('julhatasks.tab', ui.tab); }catch(_){}
+      render(); window.scrollTo(0,0); break;
+    case 'month': {
+      const d = new Date(ui.y, ui.m + (+el.dataset.d), 1); ui.y = d.getFullYear(); ui.m = d.getMonth(); render(); break; }
+    case 'today': { const n = new Date(); ui.y = n.getFullYear(); ui.m = n.getMonth(); ui.sel = todayStr(); render(); break; }
+    case 'pick': ui.sel = el.dataset.date; render(); break;
+    case 'year': ui.hy = +el.dataset.y; render(); break;
+    case 'new-ev': openSheet(eventForm(null)); break;
+    case 'edit-ev': { const f = findEv(el); if(f && f.ev) openSheet(eventForm(f.ev)); break; }
+    case 'toggle-ev': {
+      const f = findEv(el); if(!f || !f.ev) break;
+      let nowDone;
+      if(f.ev.yearly){
+        const s = new Set(f.ev.doneYears || []);
+        nowDone = !s.has(f.year); nowDone ? s.add(f.year) : s.delete(f.year);
+        f.ev.doneYears = [...s];
+      } else { f.ev.done = nowDone = !f.ev.done; }
+      save(); render(); if(nowDone) toast('Feito! 💚'); break; }
+    case 'delete-ev': {
+      const id = $('#evForm').dataset.id;
+      if(confirm('Excluir este evento?' + (state.events.find(e => e.id===id)?.yearly ? ' (Ele some de todos os anos.)' : ''))){
+        state.events = state.events.filter(e => e.id !== id); save(); closeSheet(); render(); }
+      break; }
+    case 'toggle-task': { const t = findTask(el); if(t){ t.done = !t.done; t.doneAt = t.done ? Date.now() : null; save(); render(); if(t.done) toast('Tarefa concluída ✅'); } break; }
+    case 'star-task': { const t = findTask(el); if(t){ t.important = !t.important; save(); render(); } break; }
+    case 'edit-task': { const t = findTask(el); if(t) openSheet(taskForm(t)); break; }
+    case 'delete-task': {
+      const id = $('#taskEdit').dataset.tid;
+      if(confirm('Excluir esta tarefa?')){ state.tasks = state.tasks.filter(t => t.id !== id); save(); closeSheet(); render(); }
+      break; }
+    case 'toggle-done-list': ui.showDone = !ui.showDone; render(); break;
+    case 'clear-done':
+      if(confirm('Apagar todas as tarefas concluídas?')){ state.tasks = state.tasks.filter(t => !t.done); save(); render(); }
+      break;
+    case 'settings': openSheet(settingsSheet()); break;
+    case 'export': exportData(); break;
+    case 'import': $('#importFile').click(); break;
+    case 'close-sheet': closeSheet(); break;
+  }
+});
+
+document.addEventListener('change', e => {
+  // ao escolher "Aniversário" num evento novo, já liga o "todo ano"
+  const f = e.target.form;
+  if(f && f.id === 'evForm' && e.target.name === 'cat' && e.target.value === 'aniversario' && !f.dataset.id) f.elements.yearly.checked = true;
+});
+
+document.addEventListener('submit', e => {
+  const f = e.target; e.preventDefault();
+  if(f.id === 'taskForm'){
+    const title = f.elements.title.value.trim(); if(!title) return;
+    state.tasks.push({id:uid(), title, note:'', important:false, done:false, created:Date.now()});
+    save(); render(); const inp = $('#taskForm input'); inp && inp.focus();
+  }
+  if(f.id === 'taskEdit'){
+    const t = state.tasks.find(x => x.id === f.dataset.tid); if(!t) return;
+    t.title = f.elements.title.value.trim() || t.title; t.note = f.elements.note.value.trim(); t.important = f.elements.important.checked;
+    save(); closeSheet(); render();
+  }
+  if(f.id === 'evForm'){
+    const data = {
+      title: f.elements.title.value.trim(), date: f.elements.date.value, time: f.elements.time.value,
+      cat: (f.querySelector('input[name=cat]:checked') || {}).value || 'outro',
+      yearly: f.elements.yearly.checked, note: f.elements.note.value.trim(),
+    };
+    if(!data.title || !data.date) return;
+    const id = f.dataset.id;
+    if(id){
+      const ev = state.events.find(e => e.id === id);
+      if(ev){
+        if(ev.yearly && !data.yearly){ ev.done = (ev.doneYears||[]).includes(+data.date.slice(0,4)); }
+        if(!ev.yearly && data.yearly){ ev.doneYears = ev.done ? [+ev.date.slice(0,4)] : []; }
+        Object.assign(ev, data);
+      }
+    } else {
+      state.events.push({id:uid(), ...data, done:false, doneYears:[], created:Date.now()});
+    }
+    // leva a agenda para o dia do evento
+    const d = parse(data.date); ui.sel = data.date; ui.y = d.getFullYear(); ui.m = d.getMonth();
+    save(); closeSheet(); render(); toast(id ? 'Evento atualizado' : 'Evento criado 💚');
+  }
+});
+
+render();
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
