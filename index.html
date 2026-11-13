@@ -181,6 +181,18 @@ main{padding:6px 16px 24px;max-width:560px;margin:0 auto}
 .stats3 small{font-size:11px;color:var(--muted);font-weight:600}
 .period-seg input:checked + span{background:var(--period);color:#fff}
 .period-seg input[value="0"]:checked + span{background:var(--surface);color:var(--text)}
+.day b.hb{display:block;height:9px;font-size:12px;line-height:9px;color:var(--period);font-weight:700}
+body.lock2{overflow:hidden}
+.fullcal{position:fixed;inset:0;z-index:15;background:var(--bg);display:flex;flex-direction:column}
+.fc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 16px 8px;max-width:560px;width:100%;margin:0 auto}
+.fc-head b{font-size:17px}
+.fc-wd{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;font-weight:650;color:var(--muted);padding:6px 16px 8px;border-bottom:1px solid var(--line);max-width:560px;width:100%;margin:0 auto}
+.fc-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px;max-width:560px;width:100%;margin:0 auto;position:relative}
+.fc-month h3{margin:20px 4px 8px;font-size:18px;text-transform:capitalize}
+.fc-body .day{height:54px}
+.fc-body .day span{font-size:16px}
+.fc-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+.fc-foot .in{max-width:560px;margin:0 auto}
 /* categorias e aparência */
 .cat-emoji{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px}
 .chev{flex:none;color:var(--muted);font-size:22px;line-height:1}
@@ -324,6 +336,15 @@ try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s &
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Histórico</button>
 </nav>
 
+<div class="fullcal" id="fullcal" hidden>
+  <div class="fc-head"><button class="icon-btn" data-act="full-close" aria-label="Fechar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <b>Calendário do ciclo</b><button class="link" style="font-size:15px" data-act="full-today">Hoje</button></div>
+  <div class="fc-wd"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+  <div class="fc-body hcal" id="fcBody"></div>
+  <div class="fc-foot"><div class="in" id="fcFoot"></div></div>
+</div>
+
 <div class="sheet" id="sheet">
   <div class="backdrop" data-act="close-sheet"></div>
   <div class="panel"><div class="grab"></div><div id="sheetBody"></div></div>
@@ -424,7 +445,7 @@ const occInYear = year => state.events.flatMap(e => occFor(e, year)).sort(cmpOcc
 
 /* ---------- estado da tela ---------- */
 const now = new Date();
-const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), showDone:false, cy:now.getFullYear(), cm:now.getMonth(), hEdit:false, evDraft:null, fm:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` };
+const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), showDone:false, full:false, cy:now.getFullYear(), cm:now.getMonth(), hEdit:false, evDraft:null, fm:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` };
 try{ const t = localStorage.getItem('julhatasks.tab'); if(t) ui.tab = t; }catch(e){}
 
 /* ---------- linhas ---------- */
@@ -896,7 +917,45 @@ const PHASES = {
 };
 const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-const hasLog = e => e && ((e.sym||[]).length || (e.mood||[]).length || (e.extra||[]).length || e.note);
+const hasLog = e => e && ((e.sym||[]).length || (e.mood||[]).length || (e.extra||[]).length || e.note || e.sex);
+const SEX = ['Não','Protegida','Sem proteção'];
+const EDIT_HINT = {per:'Toque nos dias em que você menstruou. Toque de novo para desmarcar.', sex:'Toque nos dias em que teve relação ♥. Toque de novo para desmarcar.'};
+/* células de um mês do calendário de saúde (usado no card e no calendário completo) */
+function monthCells(y, mo, marks, t){
+  const D = state.health.days, first = new Date(y, mo, 1).getDay(), days = new Date(y, mo + 1, 0).getDate();
+  let cells = '';
+  for(let i = 0; i < first; i++) cells += '<div></div>';
+  for(let d = 1; d <= days; d++){
+    const ds = `${y}-${pad(mo+1)}-${pad(d)}`, e = D[ds];
+    const below = e && e.sex ? '<b class="hb">♥</b>' : `<b>${hasLog(e) ? '<i style="background:var(--muted)"></i>' : ''}</b>`;
+    cells += `<button class="day hday ${marks[ds]||''} ${ds===t?'today':''} ${ds>t?'future':''}" data-act="h-day" data-date="${ds}"><span>${d}</span>${below}</button>`;
+  }
+  return cells;
+}
+const LEGEND = `<div class="legend"><span><i style="background:var(--period)"></i>Menstruação</span><span><i style="border:2px dashed var(--period)"></i>Previsão</span>
+  <span><i style="background:var(--fertile-soft);border:1px solid var(--fertile)"></i>Fértil</span><span><i style="background:var(--fertile)"></i>Ovulação</span><span><b style="color:var(--period)">♥</b> Relação</span></div>`;
+function renderFull(keepScroll){
+  const body = $('#fcBody'), top = body.scrollTop;
+  const info = healthData(), marks = healthMarks(info), t = info.t, now = new Date();
+  let html = '';
+  for(let k = -12; k <= 12; k++){
+    const d = new Date(now.getFullYear(), now.getMonth() + k, 1), y = d.getFullYear();
+    html += `<div class="fc-month" data-ym="${y}-${pad(d.getMonth()+1)}"><h3>${MONTHS[d.getMonth()]}${y !== now.getFullYear() ? ' ' + y : ''}</h3>
+      <div class="cal-grid">${monthCells(y, d.getMonth(), marks, t)}</div></div>`;
+  }
+  body.innerHTML = html;
+  body.classList.toggle('editing', !!ui.hEdit);
+  $('#fcFoot').innerHTML = ui.hEdit
+    ? `<p class="hint" style="margin:0 2px 10px;text-align:center">${EDIT_HINT[ui.hEdit]}</p><button class="btn primary" style="width:100%" data-act="h-edit" data-mode="${ui.hEdit}">Pronto</button>`
+    : `${LEGEND.replace('class="legend"', 'class="legend" style="margin:0 0 10px;justify-content:center"')}<div class="hbtns" style="margin:0"><button class="btn period" data-act="h-edit" data-mode="per">✏️ Menstruação</button><button class="btn ghost" data-act="h-edit" data-mode="sex">♥ Relação</button></div>`;
+  if(keepScroll) body.scrollTop = top;
+}
+function openFull(){
+  ui.full = true; $('#fullcal').hidden = false; document.body.classList.add('lock2');
+  renderFull(false);
+  const cur = $('#fcBody').querySelector(`[data-ym="${curYM()}"]`); if(cur) $('#fcBody').scrollTop = cur.offsetTop - 8;
+}
+function closeFull(){ ui.full = false; ui.hEdit = false; $('#fullcal').hidden = true; document.body.classList.remove('lock2'); render(); }
 const avgOf = a => Math.round(a.reduce((x,y) => x + y, 0) / a.length);
 
 /* dias seguidos de menstruação (aceita 1 dia de falha no meio) viram um período */
@@ -985,24 +1044,17 @@ function renderHealth(){
 
   // calendário
   const y = ui.cy, mo = ui.cm, marks = healthMarks(info);
-  const first = new Date(y, mo, 1).getDay(), days = new Date(y, mo + 1, 0).getDate();
-  let cells = ['D','S','T','Q','Q','S','S'].map(w => `<div class="cal-wd">${w}</div>`).join('');
-  for(let i = 0; i < first; i++) cells += '<div></div>';
-  for(let d = 1; d <= days; d++){
-    const ds = `${y}-${pad(mo+1)}-${pad(d)}`;
-    cells += `<button class="day hday ${marks[ds]||''} ${ds===t?'today':''} ${ds>t?'future':''}" data-act="h-day" data-date="${ds}"><span>${d}</span><b>${hasLog(H.days[ds]) ? '<i style="background:var(--muted)"></i>' : ''}</b></button>`;
-  }
+  const cells = ['D','S','T','Q','Q','S','S'].map(w => `<div class="cal-wd">${w}</div>`).join('') + monthCells(y, mo, marks, t);
   html += `<div class="section-title">Calendário</div>
   <div class="card hcal ${ui.hEdit ? 'editing' : ''}">
     <div class="cal-head"><h2>${MONTHS[mo]} ${y}</h2>
       <div class="cal-nav"><button data-act="h-month" data-d="-1" aria-label="Mês anterior">‹</button><button data-act="h-month" data-d="0">Hoje</button><button data-act="h-month" data-d="1" aria-label="Próximo mês">›</button></div></div>
-    ${ui.hEdit ? '<p class="hint" style="margin:0 2px 8px">Toque nos dias em que você menstruou. Toque de novo para desmarcar.</p>' : ''}
+    ${ui.hEdit ? `<p class="hint" style="margin:0 2px 8px">${EDIT_HINT[ui.hEdit]}</p>` : ''}
     <div class="cal-grid">${cells}</div>
-    <div class="legend"><span><i style="background:var(--period)"></i>Menstruação</span><span><i style="border:2px dashed var(--period)"></i>Previsão</span>
-      <span><i style="background:var(--fertile-soft);border:1px solid var(--fertile)"></i>Fértil</span><span><i style="background:var(--fertile)"></i>Ovulação</span></div>
+    ${LEGEND}
     <div class="hbtns" style="margin-top:12px">${ui.hEdit
-      ? `<button class="btn primary" data-act="h-edit">Pronto</button>`
-      : `<button class="btn ghost" data-act="h-edit">✏️ Editar dias da menstruação</button>`}</div>
+      ? `<button class="btn primary" data-act="h-edit" data-mode="${ui.hEdit}">Pronto</button>`
+      : `<button class="btn ghost" data-act="h-edit" data-mode="per">✏️ Menstruação</button><button class="btn ghost" data-act="h-full">🗓️ Calendário completo</button>`}</div>
   </div>`;
 
   // resumo e histórico
@@ -1014,6 +1066,7 @@ function renderHealth(){
     <div class="card">
       <div class="stats3"><div><b>${info.cycleLen}</b><small>dias de ciclo</small></div><div><b>${info.periodLen}</b><small>dias de menstruação</small></div><div><b>${info.ps.length}</b><small>menstruações registradas</small></div></div>
       ${info.lens.length < 2 ? '<p class="hint" style="margin:10px 2px 0">As médias ficam mais certinhas depois de 2 ou 3 ciclos registrados.</p>' : ''}
+      ${(n => n ? `<p style="margin:12px 2px 0;font-size:14px"><b style="color:var(--period)">♥</b> ${n} ${n > 1 ? 'relações' : 'relação'} neste ciclo</p>` : '')(Object.entries(H.days).filter(([d, e]) => e.sex && d >= info.last.start).length)}
       ${top.length ? `<p style="margin:12px 2px 0;font-size:14px"><b>Mais registrados (90 dias):</b> ${top.map(k => `${SYMPTOMS[k]} (${cnt[k]})`).join(', ')}</p>` : ''}
     </div>
     <div class="section-title">Histórico</div>
@@ -1038,6 +1091,8 @@ function hLogForm(ds){
     <h2>${cap(fmtLong(ds))}</h2>
     <div class="field" style="margin-bottom:6px">Menstruação</div>
     <div class="seg period-seg">${FLOWS.map((l, i) => `<label><input type="radio" name="flow" value="${i}" ${(e.flow||0)===i?'checked':''}><span>${l}</span></label>`).join('')}</div>
+    <div class="field" style="margin-bottom:6px">♥ Relação</div>
+    <div class="seg period-seg">${SEX.map((l, i) => `<label><input type="radio" name="sex" value="${i}" ${(e.sex||0)===i?'checked':''}><span>${l}</span></label>`).join('')}</div>
     <div class="field" style="margin-bottom:0">Sintomas</div><div class="cats">${multi('sym', SYMPTOMS, e.sym)}</div>
     <div class="field" style="margin-bottom:0">Humor</div><div class="cats">${multi('mood', MOODS, e.mood)}</div>
     <div class="field" style="margin-bottom:0">Outros</div><div class="cats">${multi('extra', EXTRAS, e.extra)}</div>
@@ -1090,7 +1145,10 @@ document.addEventListener('click', e => {
       const d = +el.dataset.d ? new Date(ui.cy, ui.cm + (+el.dataset.d), 1) : new Date();
       ui.cy = d.getFullYear(); ui.cm = d.getMonth(); render(); break; }
     case 'h-go': { const d = parse(el.dataset.date); ui.cy = d.getFullYear(); ui.cm = d.getMonth(); render(); window.scrollTo({top:0, behavior:'smooth'}); break; }
-    case 'h-edit': ui.hEdit = !ui.hEdit; render(); break;
+    case 'h-edit': ui.hEdit = ui.hEdit === el.dataset.mode ? false : el.dataset.mode; render(); break;
+    case 'h-full': ui.hEdit = false; openFull(); break;
+    case 'full-close': closeFull(); break;
+    case 'full-today': { const cur = $('#fcBody').querySelector(`[data-ym="${curYM()}"]`); if(cur) $('#fcBody').scrollTo({top:cur.offsetTop - 8, behavior:'smooth'}); break; }
     case 'h-first': openSheet(hSettingsForm(true)); break;
     case 'h-settings': openSheet(hSettingsForm(false)); break;
     case 'h-today': setFlow(todayStr(), 2); save(); render(); toast('Menstruação registrada 🩸'); break;
@@ -1102,7 +1160,13 @@ document.addEventListener('click', e => {
         toast(mk === 'pred' ? 'Menstruação prevista 🩸' : mk === 'ovu' ? 'Ovulação prevista 🌸' : mk === 'fert' ? 'Período fértil previsto 🌸' : 'Esse dia ainda não chegou 🙂');
         break;
       }
-      if(ui.hEdit){ const cur = (state.health.days[ds] || {}).flow > 0; setFlow(ds, cur ? 0 : 2); save(); render(); }
+      if(ui.hEdit === 'per'){ const cur = (state.health.days[ds] || {}).flow > 0; setFlow(ds, cur ? 0 : 2); save(); render(); }
+      else if(ui.hEdit === 'sex'){
+        const H = state.health, e2 = {...(H.days[ds] || {})};
+        if(e2.sex) delete e2.sex; else e2.sex = 1;
+        if(e2.flow || hasLog(e2)) H.days[ds] = e2; else delete H.days[ds];
+        save(); render();
+      }
       else openSheet(hLogForm(ds));
       break; }
   }
@@ -1130,7 +1194,7 @@ document.addEventListener('submit', e => {
   if(f.id === 'hLog'){
     e.preventDefault();
     const ds = f.dataset.date, vals = n => [...f.querySelectorAll(`input[name=${n}]:checked`)].map(x => x.value);
-    const entry = {flow: +f.elements.flow.value || 0, sym: vals('sym'), mood: vals('mood'), extra: vals('extra'), note: f.elements.note.value.trim()};
+    const entry = {flow: +f.elements.flow.value || 0, sex: +f.elements.sex.value || 0, sym: vals('sym'), mood: vals('mood'), extra: vals('extra'), note: f.elements.note.value.trim()};
     Object.keys(entry).forEach(k => { if(!entry[k] || (Array.isArray(entry[k]) && !entry[k].length)) delete entry[k]; });
     if(Object.keys(entry).length) state.health.days[ds] = entry; else delete state.health.days[ds];
     save(); closeSheet(); render(); toast('Registrado 💗');
@@ -1240,6 +1304,7 @@ function render(){
   $('#main').innerHTML = love + views[ui.tab]();
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   $('#fab').style.display = ui.tab === 'tarefas' ? 'none' : '';
+  if(ui.full) renderFull(true);
   $('#fab').setAttribute('aria-label', ui.tab === 'financas' ? 'Novo lançamento' : ui.tab === 'saude' ? 'Registrar o dia' : 'Novo evento');
 }
 
