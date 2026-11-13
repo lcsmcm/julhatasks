@@ -239,6 +239,7 @@ const CATS = {
   passeio:    {label:'Passeio',     emoji:'💚', color:'#3E9B6B'},
   compromisso:{label:'Compromisso', emoji:'📌', color:'#4C7FB8'},
   saude:      {label:'Saúde',       emoji:'🩺', color:'#C9625C'},
+  curso:      {label:'Curso',       emoji:'✈️', color:'#4FA3D1'},
   trabalho:   {label:'Trabalho',    emoji:'💼', color:'#8A72B8'},
   outro:      {label:'Outro',       emoji:'✨', color:'#8A958E'},
 };
@@ -276,14 +277,29 @@ const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MONTHS_S[d.
 const fmtLong = s => { const d = parse(s); return `${WEEK[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`; };
 const countdown = n => n===0 ? 'hoje' : n===1 ? 'amanhã' : `em ${n} dias`;
 
-/* Um evento "todo ano" gera uma ocorrência em cada ano a partir do ano em que foi criado */
+/* "Todo ano": uma ocorrência por ano a partir do ano do evento.
+   "Toda semana": uma ocorrência a cada 7 dias a partir da data, até a data final (se houver). */
 function occFor(ev, year){
   const [y,m,d] = ev.date.split('-').map(Number);
+  if(ev.weekly){
+    if(year < y) return [];
+    const start = parse(ev.date), out = [], done = new Set(ev.doneDates || []);
+    const cur = new Date(Math.max(start.getTime(), new Date(year,0,1).getTime()));
+    cur.setDate(cur.getDate() + (start.getDay() - cur.getDay() + 7) % 7);
+    while(cur.getFullYear() === year){
+      const ds = ymd(cur);
+      if(ev.until && ds > ev.until) break;
+      out.push({ev, date:ds, year, done:done.has(ds)});
+      cur.setDate(cur.getDate() + 7);
+    }
+    return out;
+  }
   if(!ev.yearly) return y===year ? [{ev, date:ev.date, year, done:!!ev.done}] : [];
   if(year < y) return [];
   const dd = (m===2 && d===29 && !isLeap(year)) ? 28 : d;
   return [{ev, date:`${year}-${pad(m)}-${pad(dd)}`, year, done:(ev.doneYears||[]).includes(year)}];
 }
+const weeklyLabel = ev => { const w = parse(ev.date).getDay(); return `${w===0||w===6?'todo':'toda'} ${WEEK[w].replace('-feira','')}`; };
 const cmpOcc = (a,b) => a.date.localeCompare(b.date) || (a.ev.time||'99').localeCompare(b.ev.time||'99');
 const occInYear = year => state.events.flatMap(e => occFor(e, year)).sort(cmpOcc);
 
@@ -298,8 +314,9 @@ function occRow(o, opts={}){
   if(opts.showDate) sub.push(fmtShort(o.date));
   if(o.ev.time) sub.push(o.ev.time);
   if(o.ev.yearly) sub.push('todo ano');
+  if(o.ev.weekly) sub.push(weeklyLabel(o.ev));
   if(o.ev.note) sub.push(esc(o.ev.note));
-  return `<div class="item ${o.done?'done':''}" data-id="${o.ev.id}" data-year="${o.year}">
+  return `<div class="item ${o.done?'done':''}" data-id="${o.ev.id}" data-year="${o.year}" data-date="${o.date}">
     <button class="check" data-act="toggle-ev" aria-label="Marcar como feito"></button>
     <div class="item-body" data-act="edit-ev">
       <div class="item-title"><span class="dot" style="background:${c.color}"></span><span class="t">${esc(o.ev.title)}</span></div>
@@ -355,9 +372,16 @@ function renderAgenda(){
 function renderUpcoming(){
   const t = todayStr(), y = new Date().getFullYear();
   const all = [...occInYear(y-1), ...occInYear(y), ...occInYear(y+1)];
-  const pend = all.filter(o => o.date < t && !o.done && dayDiff(o.date, t) <= 60);
+  // eventos semanais: só a última semana em pendentes e só a próxima vez em "próximos"
+  const pend = all.filter(o => o.date < t && !o.done && dayDiff(o.date, t) <= (o.ev.weekly ? 7 : 60));
   const hoje = all.filter(o => o.date === t);
-  const next = all.filter(o => o.date > t && dayDiff(t, o.date) <= 365);
+  const seenWeekly = new Set();
+  const next = all.filter(o => {
+    if(!(o.date > t && dayDiff(t, o.date) <= 365)) return false;
+    if(!o.ev.weekly) return true;
+    if(seenWeekly.has(o.ev.id) || all.some(x => x.ev === o.ev && x.date === t)) return false;
+    seenWeekly.add(o.ev.id); return true;
+  });
   const feat = next.find(o => !o.done);
   let html = '';
   if(feat){
@@ -412,7 +436,9 @@ function renderHistory(){
   const years = new Set([cy]);
   state.events.forEach(e => {
     const y0 = +e.date.slice(0,4);
-    if(e.yearly){ for(let y=y0; y<=cy; y++) years.add(y); } else years.add(y0);
+    if(e.yearly){ for(let y=y0; y<=cy; y++) years.add(y); }
+    else if(e.weekly){ const end = e.until ? Math.min(cy, +e.until.slice(0,4)) : cy; for(let y=y0; y<=end; y++) years.add(y); }
+    else years.add(y0);
   });
   const ylist = [...years].sort((a,b) => b-a);
   const occ = occInYear(ui.hy);
@@ -749,7 +775,7 @@ function specialDay(dateStr){
 
 function render(){
   const br = brNow();
-  $('#greeting').textContent = `${greeting(br.hour)}, Julha 💚`;
+  $('#greeting').textContent = `${greeting(br.hour)}, Júlia 💚`;
   const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, financas:renderFinance, historico:renderHistory};
   if(!views[ui.tab]) ui.tab = 'agenda';
   const sp = specialDay(br.date);
@@ -785,8 +811,10 @@ function eventForm(ev){
     <div class="field" style="margin-bottom:0">Categoria</div>
     <div class="cats">${Object.entries(CATS).map(([k,c]) =>
       `<label><input type="radio" name="cat" value="${k}" ${ev.cat===k?'checked':''}><span>${c.emoji} ${c.label}</span></label>`).join('')}</div>
-    <label class="switch"><div>Repetir todo ano<small>Ótimo para aniversários e datas especiais</small></div>
-      <input type="checkbox" name="yearly" ${ev.yearly?'checked':''}></label>
+    <div class="field" style="margin-bottom:6px">Repetir</div>
+    <div class="seg">${[['none','Não repete'],['weekly','Toda semana'],['yearly','Todo ano']].map(([k,l]) =>
+      `<label><input type="radio" name="rep" value="${k}" ${(ev.weekly?'weekly':ev.yearly?'yearly':'none')===k?'checked':''}><span>${l}</span></label>`).join('')}</div>
+    <label class="field" data-rep="weekly" ${ev.weekly?'':'hidden'}>Repetir até (opcional)<input type="date" name="until" value="${ev.until||''}"></label>
     <label class="field">Observação<textarea name="note" rows="2" maxlength="300" placeholder="Opcional">${esc(ev.note||'')}</textarea></label>
     <div class="actions">
       ${isNew ? `<button type="button" class="btn ghost" data-act="close-sheet">Cancelar</button>` : `<button type="button" class="btn ghost danger" data-act="delete-ev">Excluir</button>`}
@@ -874,7 +902,11 @@ document.addEventListener('click', e => {
     case 'toggle-ev': {
       const f = findEv(el); if(!f || !f.ev) break;
       let nowDone;
-      if(f.ev.yearly){
+      if(f.ev.weekly){
+        const date = el.closest('[data-date]').dataset.date, s = new Set(f.ev.doneDates || []);
+        nowDone = !s.has(date); nowDone ? s.add(date) : s.delete(date);
+        f.ev.doneDates = [...s];
+      } else if(f.ev.yearly){
         const s = new Set(f.ev.doneYears || []);
         nowDone = !s.has(f.year); nowDone ? s.add(f.year) : s.delete(f.year);
         f.ev.doneYears = [...s];
@@ -882,7 +914,7 @@ document.addEventListener('click', e => {
       save(); render(); if(nowDone) toast('Feito! 💚'); break; }
     case 'delete-ev': {
       const id = $('#evForm').dataset.id;
-      if(confirm('Excluir este evento?' + (state.events.find(e => e.id===id)?.yearly ? ' (Ele some de todos os anos.)' : ''))){
+      if(confirm('Excluir este evento?' + ((ev => ev && (ev.yearly || ev.weekly))(state.events.find(e => e.id===id)) ? ' (Todas as repetições somem.)' : ''))){
         state.events = state.events.filter(e => e.id !== id); save(); closeSheet(); render(); }
       break; }
     case 'toggle-task': { const t = findTask(el); if(t){ t.done = !t.done; t.doneAt = t.done ? Date.now() : null; save(); render(); if(t.done) toast('Tarefa concluída ✅'); } break; }
@@ -906,7 +938,9 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   // ao escolher "Aniversário" num evento novo, já liga o "todo ano"
   const f = e.target.form;
-  if(f && f.id === 'evForm' && e.target.name === 'cat' && e.target.value === 'aniversario' && !f.dataset.id) f.elements.yearly.checked = true;
+  if(!f || f.id !== 'evForm') return;
+  if(e.target.name === 'cat' && e.target.value === 'aniversario' && !f.dataset.id) f.querySelector('input[name=rep][value=yearly]').checked = true;
+  f.querySelector('[data-rep=weekly]').hidden = f.elements.rep.value !== 'weekly';
 });
 
 document.addEventListener('submit', e => {
@@ -925,7 +959,9 @@ document.addEventListener('submit', e => {
     const data = {
       title: f.elements.title.value.trim(), date: f.elements.date.value, time: f.elements.time.value,
       cat: (f.querySelector('input[name=cat]:checked') || {}).value || 'outro',
-      yearly: f.elements.yearly.checked, note: f.elements.note.value.trim(),
+      yearly: f.elements.rep.value === 'yearly', weekly: f.elements.rep.value === 'weekly',
+      until: f.elements.rep.value === 'weekly' ? f.elements.until.value : '',
+      note: f.elements.note.value.trim(),
     };
     if(!data.title || !data.date) return;
     const id = f.dataset.id;
@@ -937,7 +973,7 @@ document.addEventListener('submit', e => {
         Object.assign(ev, data);
       }
     } else {
-      state.events.push({id:uid(), ...data, done:false, doneYears:[], created:Date.now()});
+      state.events.push({id:uid(), ...data, done:false, doneYears:[], doneDates:[], created:Date.now()});
     }
     // leva a agenda para o dia do evento
     const d = parse(data.date); ui.sel = data.date; ui.y = d.getFullYear(); ui.m = d.getMonth();
