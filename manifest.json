@@ -1,6 +1,6 @@
 {
-  "name": "JujuTasks",
-  "short_name": "JujuTasks",
+  "name": "JujuApp",
+  "short_name": "JujuApp",
   "description": "Agenda e tarefas da Julha",
   "lang": "pt-BR",
   "start_url": "./",
