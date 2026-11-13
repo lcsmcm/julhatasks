@@ -18,11 +18,19 @@
   --bg:#F4F7F4; --surface:#FFFFFF; --surface2:#EDF4EF; --text:#1D2B23; --muted:#748178; --line:#E2E9E4;
   --green:#2F7D55; --green-soft:#DDEFE4; --green-ink:#1F5C3D; --danger:#C2554F;
   --shadow:0 1px 2px rgba(20,40,30,.05),0 6px 20px rgba(20,40,30,.06);
+  --fab-shadow:rgba(47,125,85,.35); --grad1:#5DBA8A; --grad2:#24684A;
+  --period:#E05A7A; --period-soft:#FCE4EA; --fertile:#3A9CBE; --fertile-soft:#DCF0F7; --fertile-ink:#1F6E8A;
+  color-scheme:light dark;
 }
+:root[data-mode=light]{color-scheme:light}
 @media (prefers-color-scheme:dark){
-  :root{--bg:#0F1612;--surface:#17211B;--surface2:#1D2A22;--text:#E6EEE8;--muted:#8F9C94;--line:#26332B;
-    --green:#4FB37F;--green-soft:#1E3A2B;--green-ink:#A3E0BD;--danger:#E07A73;--shadow:none}
+  :root:not([data-mode=light]){--bg:#0F1612;--surface:#17211B;--surface2:#1D2A22;--text:#E6EEE8;--muted:#8F9C94;--line:#26332B;
+    --green:#4FB37F;--green-soft:#1E3A2B;--green-ink:#A3E0BD;--danger:#E07A73;--shadow:none;
+    --period:#F0728F;--period-soft:#4A2230;--fertile:#5BB8D8;--fertile-soft:#173A47;--fertile-ink:#A6DDF0}
 }
+:root[data-mode=dark]{color-scheme:dark;--bg:#0F1612;--surface:#17211B;--surface2:#1D2A22;--text:#E6EEE8;--muted:#8F9C94;--line:#26332B;
+  --green:#4FB37F;--green-soft:#1E3A2B;--green-ink:#A3E0BD;--danger:#E07A73;--shadow:none;
+  --period:#F0728F;--period-soft:#4A2230;--fertile:#5BB8D8;--fertile-soft:#173A47;--fertile-ink:#A6DDF0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -114,7 +122,7 @@ main{padding:6px 16px 24px;max-width:560px;margin:0 auto}
 .love.special h3{margin:0 0 6px;font-size:19px;letter-spacing:-.01em}
 .love.special p{color:#fff;opacity:.95}
 .love.special span{color:#fff;opacity:.85}
-.love.special.big{background:linear-gradient(135deg,#5DBA8A,#24684A);padding:22px 18px;text-align:center}
+.love.special.big{background:linear-gradient(135deg,var(--grad1),var(--grad2));padding:22px 18px;text-align:center}
 .love.special.big h3{font-size:23px}
 .hero{background:var(--green);color:#fff;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
 .hero small{opacity:.85;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
@@ -142,14 +150,61 @@ main{padding:6px 16px 24px;max-width:560px;margin:0 auto}
 .cat-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:14px;margin-top:10px}
 .cat-row .bar{margin:0;height:6px}
 
+/* saúde */
+.cycle-hero{text-align:center;padding:20px 16px}
+.cycle-hero h3{margin:0;font-size:21px;letter-spacing:-.01em}
+.cycle-hero p{margin:4px 0 0;color:var(--muted);font-size:14px;line-height:1.4}
+.ring{position:relative;width:150px;height:150px;margin:0 auto 14px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .c small{font-size:12px;color:var(--muted);font-weight:600}
+.ring .c b{font-size:46px;font-weight:750;letter-spacing:-.03em;line-height:1.05}
+.phase{display:inline-block;margin-top:10px;font-size:12px;font-weight:650;padding:5px 11px;border-radius:99px;background:var(--surface2);color:var(--text)}
+.phase.menstrual{background:var(--period-soft);color:var(--period)}
+.phase.fertil,.phase.ovulacao{background:var(--fertile-soft);color:var(--fertile-ink)}
+.hbtns{display:flex;gap:8px;margin-top:16px}
+.hbtns .btn{padding:12px 8px;font-size:15px}
+.btn.period{background:var(--period);color:#fff}
+.tip{background:var(--surface2);border-radius:16px;padding:12px 14px;margin-top:12px;font-size:14px;line-height:1.45}
+.hday.fert span{background:var(--fertile-soft);color:var(--fertile-ink)}
+.hday.ovu span{background:var(--fertile);color:#fff;font-weight:650}
+.hday.pred span{border:2px dashed var(--period);line-height:26px;color:var(--period)}
+.hday.per span{background:var(--period);color:#fff;font-weight:650}
+.hday.today span{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+.hcal.editing .hday:not(.per) span{border:1.5px solid var(--line);line-height:27px}
+.hcal.editing .hday.future{opacity:.35}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats3 div{background:var(--bg);border-radius:14px;padding:10px 6px;text-align:center}
+.stats3 b{display:block;font-size:24px;font-weight:750;letter-spacing:-.02em}
+.stats3 small{font-size:11px;color:var(--muted);font-weight:600}
+.period-seg input:checked + span{background:var(--period);color:#fff}
+.period-seg input[value="0"]:checked + span{background:var(--surface);color:var(--text)}
+/* categorias e aparência */
+.cat-emoji{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px}
+.chev{flex:none;color:var(--muted);font-size:22px;line-height:1}
+.swatches{display:flex;flex-wrap:wrap;gap:10px 6px;margin:8px 0 18px}
+.sw{border:none;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted);width:60px;position:relative}
+.sw input{position:absolute;opacity:0;pointer-events:none}
+.sw i{width:40px;height:40px;border-radius:50%;display:block}
+.sw.on i,.sw input:checked + i{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--text)}
+.swatches.small .sw{width:auto}
+.swatches.small .sw i{width:32px;height:32px}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:-6px 0 14px}
+.emoji-grid button{border:none;background:var(--bg);border-radius:10px;font-size:20px;height:38px;padding:0}
+.chip-add{border:1.5px dashed var(--line);background:none;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:650;color:var(--green)}
+.cat-preview{display:flex;justify-content:center;margin:0 0 16px}
+.cat-preview span{border-radius:999px;padding:8px 16px;font-size:16px;font-weight:650}
+
 /* abas */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
-  padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:space-around}
-.tab{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);padding:6px 2px;min-width:0;flex:1}
-.tab svg{width:24px;height:24px}
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:space-around}
+.tab{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;letter-spacing:-.01em;font-weight:600;color:var(--muted);padding:6px 2px;min-width:0;flex:1}
+.tab svg{width:23px;height:23px}
 .tab.on{color:var(--green)}
 .fab{position:fixed;right:20px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:6;width:58px;height:58px;border-radius:50%;
-  border:none;background:var(--green);color:#fff;font-size:32px;line-height:1;box-shadow:0 8px 24px rgba(47,125,85,.35);display:grid;place-items:center}
+  border:none;background:var(--green);color:#fff;font-size:32px;line-height:1;box-shadow:0 8px 24px var(--fab-shadow);display:grid;place-items:center}
 .fab svg{width:26px;height:26px}
 
 /* painel inferior */
@@ -193,6 +248,48 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
   background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%)}
 </style>
+<style id="themeVars"></style>
+<script>
+/* temas de cor: cada um gera as cores do modo claro e do escuro a partir de um tom */
+const THEMES = {
+  verde:   {n:'Verde',    h:149, s:45, sw:'#2F7D55'},
+  rosa:    {n:'Rosa',     h:335, s:55},
+  lilas:   {n:'Lilás',    h:268, s:38},
+  azul:    {n:'Azul',     h:212, s:52},
+  turquesa:{n:'Turquesa', h:184, s:60},
+  coral:   {n:'Coral',    h:8,   s:62},
+  vinho:   {n:'Vinho',    h:345, s:52},
+  dourado: {n:'Dourado',  h:36,  s:62},
+  grafite: {n:'Grafite',  h:215, s:10},
+};
+THEMES.rosa.sw = 'hsl(335,55%,46%)';
+Object.values(THEMES).forEach(t => { if(!t.sw) t.sw = `hsl(${t.h},${t.s}%,42%)`; });
+function themeCSS(k){
+  const t = THEMES[k]; if(!t || k === 'verde') return '';
+  const {h, s} = t, soft = Math.min(55, s + 8), tint = Math.min(26, s * .5);
+  const light = `--bg:hsl(${h},${tint}%,96.5%);--surface2:hsl(${h},${tint+6}%,94%);--line:hsl(${h},${tint}%,90%);--text:hsl(${h},20%,14%);--muted:hsl(${h},7%,47%);
+    --green:hsl(${h},${s}%,${k==='dourado'?36:42}%);--green-soft:hsl(${h},${soft}%,91%);--green-ink:hsl(${h},${s}%,26%);
+    --fab-shadow:hsla(${h},${s}%,42%,.35);--grad1:hsl(${h},${s*.8}%,60%);--grad2:hsl(${h},${s}%,30%)`;
+  const dark = `--bg:hsl(${h},${tint*.7}%,7%);--surface:hsl(${h},${tint*.6}%,11%);--surface2:hsl(${h},${tint*.6}%,14%);--line:hsl(${h},${tint*.5}%,19%);
+    --text:hsl(${h},15%,92%);--muted:hsl(${h},7%,61%);--green:hsl(${h},${Math.min(60,s+5)}%,60%);--green-soft:hsl(${h},${Math.min(40,s)}%,19%);--green-ink:hsl(${h},${Math.min(60,s+10)}%,80%)`;
+  return `:root{${light}}\n@media (prefers-color-scheme:dark){:root:not([data-mode=light]){${dark}}}\n:root[data-mode=dark]{${dark}}`;
+}
+function applyTheme(th){
+  th = th || {};
+  const root = document.documentElement;
+  root.dataset.mode = ['light','dark'].includes(th.mode) ? th.mode : 'auto';
+  document.getElementById('themeVars').textContent = themeCSS(th.accent);
+  try{
+    const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+    const custom = th.mode === 'light' || th.mode === 'dark' || (th.accent && th.accent !== 'verde');
+    document.querySelectorAll('meta[name=theme-color]').forEach(m => {
+      if(!m.dataset.orig) m.dataset.orig = m.getAttribute('content');
+      m.setAttribute('content', custom ? bg : m.dataset.orig);
+    });
+  }catch(e){}
+}
+try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s && s.theme); }catch(e){}
+</script>
 </head>
 <body>
 
@@ -219,6 +316,8 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Próximos</button>
   <button class="tab" data-act="tab" data-tab="tarefas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/></svg>Tarefas</button>
+  <button class="tab" data-act="tab" data-tab="saude">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-9.3-9.4C1.6 8.6 3.6 5 7.1 5c2.1 0 3.6 1.2 4.9 3 1.3-1.8 2.8-3 4.9-3 3.5 0 5.5 3.6 4.4 6.6C19.5 16.4 12 21 12 21z"/></svg>Saúde</button>
   <button class="tab" data-act="tab" data-tab="financas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="3"/><path d="M2.5 10h19M6.5 14.5h4"/></svg>Finanças</button>
   <button class="tab" data-act="tab" data-tab="historico">
@@ -234,32 +333,52 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 
 <script>
 /* ---------- dados ---------- */
-const CATS = {
-  aniversario:{label:'Aniversário', emoji:'🎂', color:'#D9A441'},
-  passeio:    {label:'Passeio',     emoji:'💚', color:'#3E9B6B'},
-  compromisso:{label:'Compromisso', emoji:'📌', color:'#4C7FB8'},
-  saude:      {label:'Saúde',       emoji:'🩺', color:'#C9625C'},
-  curso:      {label:'Curso',       emoji:'✈️', color:'#4FA3D1'},
-  trabalho:   {label:'Trabalho',    emoji:'💼', color:'#8A72B8'},
-  outro:      {label:'Outro',       emoji:'✨', color:'#8A958E'},
-};
+const DEFAULT_CATS = [
+  {id:'aniversario', label:'Aniversário', emoji:'🎂', color:'#D9A441'},
+  {id:'passeio',     label:'Passeio',     emoji:'💚', color:'#3E9B6B'},
+  {id:'compromisso', label:'Compromisso', emoji:'📌', color:'#4C7FB8'},
+  {id:'saude',       label:'Saúde',       emoji:'🩺', color:'#C9625C'},
+  {id:'curso',       label:'Curso',       emoji:'✈️', color:'#4FA3D1'},
+  {id:'trabalho',    label:'Trabalho',    emoji:'💼', color:'#8A72B8'},
+  {id:'outro',       label:'Outro',       emoji:'✨', color:'#8A958E'},
+];
 const KEY = 'julhatasks.v1';
 const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const MONTHS_S = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const WEEK = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 
+/* nomes e emojis de categoria aparecem direto na tela: tira caracteres de HTML */
+const noHtml = v => String(v ?? '').replace(/[<>&"'`]/g, '').trim();
+const cleanCat = c => ({id:noHtml(c.id), label:noHtml(c.label).slice(0,24) || 'Categoria', emoji:noHtml(c.emoji).slice(0,16) || '🏷️',
+  color:/^#[0-9a-f]{6}$/i.test(c.color) ? c.color : '#8A958E'});
+/* aceita dados antigos (sem categorias, saúde ou tema) e completa o que faltar */
+function normalize(s){
+  const arr = v => Array.isArray(v) ? v : [];
+  let cats = arr(s.cats).filter(c => c && c.id && c.label).map(cleanCat);
+  if(!cats.length) cats = DEFAULT_CATS.map(c => ({...c}));
+  if(!cats.some(c => c.id === 'outro')) cats.push({...DEFAULT_CATS[DEFAULT_CATS.length-1]});
+  const h = s.health && typeof s.health === 'object' ? s.health : {};
+  return {
+    events: arr(s.events), tasks: arr(s.tasks), bills: arr(s.bills), cats,
+    health: {days: h.days && typeof h.days === 'object' ? h.days : {}, cycleLen: +h.cycleLen || 28, periodLen: +h.periodLen || 5},
+    theme: s.theme && typeof s.theme === 'object' ? s.theme : {accent:'verde', mode:'auto'},
+  };
+}
 let state = load();
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(KEY));
-    if(s && Array.isArray(s.events)) return {events:s.events, tasks:Array.isArray(s.tasks)?s.tasks:[], bills:Array.isArray(s.bills)?s.bills:[]};
+    if(s && Array.isArray(s.events)) return normalize(s);
   }catch(e){}
-  return {events:[], tasks:[], bills:[]};
+  return normalize({});
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
   catch(e){ toast('Não consegui salvar 😕'); }
 }
+let CATS = {};
+function rebuildCats(){ CATS = Object.fromEntries(state.cats.map(c => [c.id, c])); }
+rebuildCats();
 try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
 
 /* ---------- utilidades ---------- */
@@ -272,7 +391,7 @@ const todayStr = () => ymd(new Date());
 const dayDiff = (a,b) => Math.round((parse(b)-parse(a))/86400000);
 const isLeap = y => (y%4===0 && y%100!==0) || y%400===0;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const cat = ev => CATS[ev.cat] || CATS.outro;
+const cat = ev => CATS[ev.cat] || CATS.outro || DEFAULT_CATS[DEFAULT_CATS.length-1];
 const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MONTHS_S[d.getMonth()]}`; };
 const fmtLong = s => { const d = parse(s); return `${WEEK[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`; };
 const countdown = n => n===0 ? 'hoje' : n===1 ? 'amanhã' : `em ${n} dias`;
@@ -305,7 +424,7 @@ const occInYear = year => state.events.flatMap(e => occFor(e, year)).sort(cmpOcc
 
 /* ---------- estado da tela ---------- */
 const now = new Date();
-const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), showDone:false, fm:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` };
+const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), showDone:false, cy:now.getFullYear(), cm:now.getMonth(), hEdit:false, evDraft:null, fm:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` };
 try{ const t = localStorage.getItem('julhatasks.tab'); if(t) ui.tab = t; }catch(e){}
 
 /* ---------- linhas ---------- */
@@ -694,6 +813,342 @@ document.addEventListener('submit', e => {
   save(); closeSheet(); render(); toast(id ? 'Lançamento atualizado' : 'Lançamento criado 💚');
 });
 
+/* ---------- categorias personalizadas ---------- */
+const CAT_COLORS = ['#3E9B6B','#4FA3D1','#4C7FB8','#8A72B8','#C76BA8','#E0607E','#C9625C','#E08A4F','#D9A441','#8A958E'];
+const EMOJIS = ['✈️','📚','💼','🎂','💚','📌','🩺','💅','💇‍♀️','🏋️‍♀️','🧘‍♀️','🎉','🍽️','☕','🛒','🏠','🐶','🎬','🎵','⛪','🎓','💄','🧳','🚗','💊','🦷','👗','📸','🌸','⭐','🎁','❤️'];
+const firstGlyphs = s => {
+  s = noHtml(s); if(!s) return '';
+  try{ if(typeof Intl !== 'undefined' && Intl.Segmenter){ const seg = [...new Intl.Segmenter('pt', {granularity:'grapheme'}).segment(s)]; return seg.slice(0,1).map(x => x.segment).join(''); } }catch(e){}
+  return Array.from(s).slice(0,2).join('');
+};
+
+function catList(){
+  const count = id => state.events.filter(e => (CATS[e.cat] ? e.cat : 'outro') === id).length;
+  return `<h2>Categorias</h2>
+    <p class="hint" style="margin:-6px 0 10px">Usadas nos eventos da agenda. Toque numa para mudar nome, emoji ou cor.</p>
+    <div class="list" style="margin-bottom:12px">${state.cats.map(c => { const n = count(c.id); return `
+      <div class="item" data-cid="${c.id}" data-act="edit-cat" style="cursor:pointer">
+        <span class="cat-emoji" style="background:${c.color}22">${c.emoji}</span>
+        <div class="item-body"><div class="item-title"><span class="t">${c.label}</span></div>
+          <div class="item-sub">${n ? `${n} evento${n>1?'s':''}` : 'Nenhum evento ainda'}</div></div>
+        <span class="chev">›</span>
+      </div>`; }).join('')}</div>
+    <button class="menu-btn" data-act="new-cat">➕<div>Nova categoria<small>Escolha nome, emoji e cor</small></div></button>
+    <button class="btn ghost" style="width:100%" data-act="settings">‹ Voltar</button>`;
+}
+
+function catForm(c){
+  const isNew = !c;
+  c = c || {label:'', emoji:'', color:CAT_COLORS[Math.floor(Math.random()*CAT_COLORS.length)]};
+  return `<form id="catForm" data-cid="${isNew ? '' : c.id}" autocomplete="off">
+    <h2>${isNew ? 'Nova categoria' : 'Editar categoria'}</h2>
+    <div class="cat-preview"><span id="catPrev"></span></div>
+    <label class="field">Nome<input name="label" required maxlength="24" value="${esc(c.label)}" placeholder="Ex.: Academia"></label>
+    <label class="field">Emoji<input name="emoji" maxlength="16" value="${esc(c.emoji)}" placeholder="Toque aqui e use o teclado de emojis 😊"></label>
+    <div class="emoji-grid">${EMOJIS.map(e => `<button type="button" data-act="pick-emoji" data-e="${e}">${e}</button>`).join('')}</div>
+    <div class="field" style="margin-bottom:0">Cor</div>
+    <div class="swatches small">${CAT_COLORS.map(col => `<label class="sw"><input type="radio" name="color" value="${col}" ${col===c.color?'checked':''}><i style="background:${col}"></i></label>`).join('')}</div>
+    <div class="actions">
+      ${isNew || c.id === 'outro' ? `<button type="button" class="btn ghost" data-act="${ui.evDraft ? 'back-ev' : 'cats'}">Voltar</button>` : `<button type="button" class="btn ghost danger" data-act="delete-cat">Excluir</button>`}
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>`;
+}
+function syncCatForm(f){
+  if(!f) return;
+  const col = (f.querySelector('input[name=color]:checked') || {}).value || '#8A958E';
+  const prev = $('#catPrev');
+  prev.textContent = `${firstGlyphs(f.elements.emoji.value) || '🏷️'} ${noHtml(f.elements.label.value) || 'Nome'}`;
+  prev.style.background = col + '22'; prev.style.color = col; prev.style.border = `1.5px solid ${col}`;
+}
+
+/* ---------- aparência ---------- */
+function appearanceSheet(){
+  const th = state.theme || {};
+  const mode = ['light','dark'].includes(th.mode) ? th.mode : 'auto';
+  return `<form id="appearForm"><h2>Aparência</h2>
+    <div class="field" style="margin-bottom:0">Cor do app</div>
+    <div class="swatches">${Object.entries(THEMES).map(([k,t]) =>
+      `<button type="button" class="sw ${(th.accent||'verde')===k?'on':''}" data-act="set-accent" data-k="${k}"><i style="background:${t.sw}"></i>${t.n}</button>`).join('')}</div>
+    <div class="field" style="margin-bottom:6px">Tema</div>
+    <div class="seg">${[['auto','Automático'],['light','Claro'],['dark','Escuro']].map(([k,l]) =>
+      `<label><input type="radio" name="mode" value="${k}" ${mode===k?'checked':''}><span>${l}</span></label>`).join('')}</div>
+    <p class="hint" style="margin:-6px 4px 16px">Automático segue o modo claro/escuro do iPhone.</p>
+    <button type="button" class="btn ghost" style="width:100%" data-act="settings">‹ Voltar</button>
+  </form>`;
+}
+function setTheme(patch){ state.theme = {...state.theme, ...patch}; save(); applyTheme(state.theme); }
+
+/* ---------- saúde: ciclo menstrual ---------- */
+const FLOWS = ['Nenhuma','Leve','Média','Intensa'];
+const SYMPTOMS = {colica:'Cólica', cabeca:'Dor de cabeça', inchaco:'Inchaço', seios:'Seios sensíveis', costas:'Dor nas costas',
+  cansaco:'Cansaço', espinhas:'Espinhas', enjoo:'Enjoo', doce:'Vontade de doce', insonia:'Insônia', corrimento:'Corrimento'};
+const MOODS = {feliz:'😊 Feliz', calma:'😌 Calma', carinhosa:'🥰 Carinhosa', energia:'⚡ Com energia', sensivel:'🥺 Sensível',
+  irritada:'😤 Irritada', triste:'😢 Triste', ansiosa:'😟 Ansiosa', cansada:'😴 Sem energia'};
+const EXTRAS = {pilula:'💊 Tomei a pílula', exercicio:'🏃‍♀️ Exercício', agua:'💧 Bebi bastante água'};
+const PHASES = {
+  menstrual:{n:'Fase menstrual', tip:'Descanse quando der, beba bastante água e uma bolsa de água quente ajuda na cólica. 💗'},
+  folicular:{n:'Fase folicular', tip:'A energia costuma subir nessa fase. Ótimo momento pra treinar e começar coisas novas. ✨'},
+  fertil:   {n:'Período fértil', tip:'Fase de maior chance de gravidez. A disposição e o humor costumam estar em alta. 🌸'},
+  ovulacao: {n:'Ovulação provável', tip:'Hoje é o dia com maior chance de gravidez do ciclo. 🌸'},
+  lutea:    {n:'Fase lútea', tip:'É normal sentir mais inchaço, fome ou sensibilidade agora. Seja gentil com você. 🍫'},
+  atrasada: {n:'Atrasada', tip:'Atrasos podem vir de estresse, viagens ou mudança de rotina. Se continuar, vale fazer um teste ou falar com a ginecologista.'},
+};
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const hasLog = e => e && ((e.sym||[]).length || (e.mood||[]).length || (e.extra||[]).length || e.note);
+const avgOf = a => Math.round(a.reduce((x,y) => x + y, 0) / a.length);
+
+/* dias seguidos de menstruação (aceita 1 dia de falha no meio) viram um período */
+function periods(){
+  const out = [];
+  Object.keys(state.health.days).filter(d => state.health.days[d].flow > 0).sort().forEach(d => {
+    const last = out[out.length-1];
+    if(last && dayDiff(last.end, d) <= 2) last.end = d; else out.push({start:d, end:d});
+  });
+  return out;
+}
+function healthData(){
+  const H = state.health, t = todayStr(), ps = periods();
+  const lens = [];
+  for(let i = 1; i < ps.length; i++){ const L = dayDiff(ps[i-1].start, ps[i].start); if(L >= 15 && L <= 60) lens.push(L); }
+  const cycleLen = lens.length ? avgOf(lens.slice(-6)) : H.cycleLen;
+  const last = ps[ps.length-1];
+  const finished = ps.filter(p => p !== last || dayDiff(p.end, t) > 1).map(p => dayDiff(p.start, p.end) + 1).filter(n => n <= 12);
+  const periodLen = finished.length ? avgOf(finished.slice(-6)) : H.periodLen;
+  const info = {ps, lens, cycleLen, periodLen, last, t};
+  if(!last) return info;
+  info.day = dayDiff(last.start, t) + 1;
+  info.next = addDays(last.start, cycleLen);
+  info.late = dayDiff(info.next, t);
+  info.inPeriod = t <= last.end || (dayDiff(last.end, t) === 1 && info.day <= periodLen);
+  info.ov = addDays(last.start, cycleLen - 14);
+  info.fStart = addDays(info.ov, -5); info.fEnd = addDays(info.ov, 1);
+  info.phase = info.inPeriod ? 'menstrual' : info.late > 0 ? 'atrasada'
+    : t === info.ov ? 'ovulacao' : (t >= info.fStart && t <= info.fEnd) ? 'fertil' : t < info.fStart ? 'folicular' : 'lutea';
+  return info;
+}
+/* marca cada dia do calendário: menstruação, previsão, fértil, ovulação */
+function healthMarks(info){
+  const m = {};
+  Object.entries(state.health.days).forEach(([d, v]) => { if(v.flow > 0) m[d] = 'per'; });
+  if(!info.last) return m;
+  const put = (d, c) => { if(!m[d]) m[d] = c; };
+  const t = info.t, L = info.cycleLen;
+  if(info.inPeriod) for(let i = 0; i < info.periodLen; i++){ const d = addDays(info.last.start, i); if(d > t) put(d, 'pred'); }
+  for(let k = 0; k <= 6; k++){
+    // se atrasou, as próximas previsões partem de hoje
+    const S = k === 0 ? info.last.start : info.late > 0 ? addDays(t, (k-1) * L) : addDays(info.last.start, k * L);
+    if(k > 0) for(let i = 0; i < info.periodLen; i++){ const d = addDays(S, i); if(d >= t) put(d, 'pred'); }
+    if(k === 0 && info.late > 0) continue;
+    const ov = addDays(S, L - 14);
+    put(ov, 'ovu');
+    for(let i = -5; i <= 1; i++) if(i) put(addDays(ov, i), 'fert');
+  }
+  return m;
+}
+
+function renderHealth(){
+  const info = healthData(), t = info.t, H = state.health;
+  let html = '';
+  if(!info.last){
+    html += `<div class="card cycle-hero"><div style="font-size:46px;line-height:1.2">🌸</div><h3>Seu ciclo</h3>
+      <p>Registre a sua última menstruação e o app passa a prever a próxima, o período fértil e a ovulação.</p>
+      <div class="hbtns"><button class="btn period" data-act="h-first">Registrar última menstruação</button></div></div>`;
+  } else {
+    const R = 52, C = 2 * Math.PI * R, frac = Math.min(1, info.day / info.cycleLen);
+    const col = info.inPeriod ? 'var(--period)' : info.late > 0 ? 'var(--danger)' : (info.phase === 'fertil' || info.phase === 'ovulacao') ? 'var(--fertile)' : 'var(--green)';
+    let h3, p;
+    if(info.inPeriod){ h3 = `Menstruação · dia ${info.day}`; p = `Deve terminar por volta de ${fmtShort(addDays(info.last.start, info.periodLen - 1))}`; }
+    else if(info.late > 0){ h3 = `Atrasada ${info.late} dia${info.late > 1 ? 's' : ''}`; p = `Era prevista para ${fmtShort(info.next)}`; }
+    else if(info.late === 0){ h3 = 'Menstruação prevista para hoje'; p = 'Toque em “Começou hoje” quando vier'; }
+    else { const n = -info.late; h3 = n === 1 ? 'Menstruação amanhã' : `Menstruação em ${n} dias`; p = `Previsão: ${fmtLong(info.next)}`; }
+    let f = '';
+    if(!info.inPeriod && info.late < 0){
+      if(t < info.fStart){ const n = dayDiff(t, info.fStart); f = `Período fértil ${n === 1 ? 'amanhã' : `em ${n} dias`} (${fmtShort(info.fStart)} a ${fmtShort(info.fEnd)})`; }
+      else if(t <= info.fEnd) f = t === info.ov ? 'Hoje é o dia provável da ovulação' : `No período fértil até ${fmtShort(info.fEnd)}`;
+    }
+    const today = H.days[t] || {};
+    const b1 = today.flow > 0
+      ? `<button class="btn ghost" data-act="h-log" data-date="${t}">🩸 Hoje: ${FLOWS[today.flow].toLowerCase()}</button>`
+      : `<button class="btn period" data-act="h-today">🩸 ${info.inPeriod ? 'Marcar hoje' : 'Começou hoje'}</button>`;
+    html += `<div class="card cycle-hero">
+      <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--surface2)" stroke-width="10"/>
+        <circle cx="60" cy="60" r="${R}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C.toFixed(1)}"/></svg>
+        <div class="c"><small>Dia</small><b>${info.day}</b><small>do ciclo</small></div></div>
+      <h3>${h3}</h3><p>${p}</p>${f ? `<p>${f}</p>` : ''}
+      <span class="phase ${info.phase}">${PHASES[info.phase].n}</span>
+      <div class="hbtns">${b1}<button class="btn ghost" data-act="h-log" data-date="${t}">📝 Como estou</button></div>
+    </div>
+    <div class="tip">${PHASES[info.phase].tip}</div>`;
+  }
+
+  // calendário
+  const y = ui.cy, mo = ui.cm, marks = healthMarks(info);
+  const first = new Date(y, mo, 1).getDay(), days = new Date(y, mo + 1, 0).getDate();
+  let cells = ['D','S','T','Q','Q','S','S'].map(w => `<div class="cal-wd">${w}</div>`).join('');
+  for(let i = 0; i < first; i++) cells += '<div></div>';
+  for(let d = 1; d <= days; d++){
+    const ds = `${y}-${pad(mo+1)}-${pad(d)}`;
+    cells += `<button class="day hday ${marks[ds]||''} ${ds===t?'today':''} ${ds>t?'future':''}" data-act="h-day" data-date="${ds}"><span>${d}</span><b>${hasLog(H.days[ds]) ? '<i style="background:var(--muted)"></i>' : ''}</b></button>`;
+  }
+  html += `<div class="section-title">Calendário</div>
+  <div class="card hcal ${ui.hEdit ? 'editing' : ''}">
+    <div class="cal-head"><h2>${MONTHS[mo]} ${y}</h2>
+      <div class="cal-nav"><button data-act="h-month" data-d="-1" aria-label="Mês anterior">‹</button><button data-act="h-month" data-d="0">Hoje</button><button data-act="h-month" data-d="1" aria-label="Próximo mês">›</button></div></div>
+    ${ui.hEdit ? '<p class="hint" style="margin:0 2px 8px">Toque nos dias em que você menstruou. Toque de novo para desmarcar.</p>' : ''}
+    <div class="cal-grid">${cells}</div>
+    <div class="legend"><span><i style="background:var(--period)"></i>Menstruação</span><span><i style="border:2px dashed var(--period)"></i>Previsão</span>
+      <span><i style="background:var(--fertile-soft);border:1px solid var(--fertile)"></i>Fértil</span><span><i style="background:var(--fertile)"></i>Ovulação</span></div>
+    <div class="hbtns" style="margin-top:12px">${ui.hEdit
+      ? `<button class="btn primary" data-act="h-edit">Pronto</button>`
+      : `<button class="btn ghost" data-act="h-edit">✏️ Editar dias da menstruação</button>`}</div>
+  </div>`;
+
+  // resumo e histórico
+  if(info.last){
+    const since = addDays(t, -90), cnt = {};
+    Object.entries(H.days).forEach(([d, e]) => { if(d >= since) (e.sym||[]).forEach(k => cnt[k] = (cnt[k]||0) + 1); });
+    const top = Object.keys(cnt).filter(k => SYMPTOMS[k]).sort((a,b) => cnt[b] - cnt[a]).slice(0,3);
+    html += `<div class="section-title">Resumo</div>
+    <div class="card">
+      <div class="stats3"><div><b>${info.cycleLen}</b><small>dias de ciclo</small></div><div><b>${info.periodLen}</b><small>dias de menstruação</small></div><div><b>${info.ps.length}</b><small>menstruações registradas</small></div></div>
+      ${info.lens.length < 2 ? '<p class="hint" style="margin:10px 2px 0">As médias ficam mais certinhas depois de 2 ou 3 ciclos registrados.</p>' : ''}
+      ${top.length ? `<p style="margin:12px 2px 0;font-size:14px"><b>Mais registrados (90 dias):</b> ${top.map(k => `${SYMPTOMS[k]} (${cnt[k]})`).join(', ')}</p>` : ''}
+    </div>
+    <div class="section-title">Histórico</div>
+    <div class="card"><div class="list">${info.ps.map((p, i) => ({p, i})).slice(-8).reverse().map(({p, i}) => {
+      const nx = info.ps[i+1], len = dayDiff(p.start, p.end) + 1, py = p.start.slice(0,4);
+      return `<div class="item" data-act="h-go" data-date="${p.start}" style="cursor:pointer">
+        <span class="cat-emoji" style="background:var(--period-soft)">🩸</span>
+        <div class="item-body"><div class="item-title"><span class="t">${fmtShort(p.start)}${+py !== new Date().getFullYear() ? ' ' + py : ''}</span></div>
+          <div class="item-sub">Menstruação de ${len} dia${len > 1 ? 's' : ''} · ${nx ? `ciclo de ${dayDiff(p.start, nx.start)} dias` : 'ciclo atual'}</div></div>
+        <span class="chev">›</span></div>`; }).join('')}</div></div>`;
+  }
+  html += `<button class="menu-btn" data-act="h-settings" style="margin-top:16px">⚙️<div>Duração padrão do ciclo<small>Ciclo de ${H.cycleLen} dias · menstruação de ${H.periodLen} dias (usado até ter registros suficientes)</small></div></button>
+    <p class="hint" style="text-align:center;margin:14px 8px 0">As previsões são estimativas feitas a partir dos seus registros e não servem como método anticoncepcional.</p>`;
+  return html;
+}
+
+function hLogForm(ds){
+  const e = state.health.days[ds] || {};
+  const multi = (name, dict, arr) => Object.entries(dict).map(([k, l]) =>
+    `<label><input type="checkbox" name="${name}" value="${k}" ${(arr||[]).includes(k)?'checked':''}><span>${l}</span></label>`).join('');
+  return `<form id="hLog" data-date="${ds}" autocomplete="off">
+    <h2>${cap(fmtLong(ds))}</h2>
+    <div class="field" style="margin-bottom:6px">Menstruação</div>
+    <div class="seg period-seg">${FLOWS.map((l, i) => `<label><input type="radio" name="flow" value="${i}" ${(e.flow||0)===i?'checked':''}><span>${l}</span></label>`).join('')}</div>
+    <div class="field" style="margin-bottom:0">Sintomas</div><div class="cats">${multi('sym', SYMPTOMS, e.sym)}</div>
+    <div class="field" style="margin-bottom:0">Humor</div><div class="cats">${multi('mood', MOODS, e.mood)}</div>
+    <div class="field" style="margin-bottom:0">Outros</div><div class="cats">${multi('extra', EXTRAS, e.extra)}</div>
+    <label class="field">Anotação<textarea name="note" rows="2" maxlength="300" placeholder="Opcional">${esc(e.note||'')}</textarea></label>
+    <div class="actions"><button type="button" class="btn ghost" data-act="close-sheet">Cancelar</button><button type="submit" class="btn primary">Salvar</button></div>
+  </form>`;
+}
+function hSettingsForm(first){
+  const H = state.health;
+  return `<form id="hSet" data-first="${first ? 1 : ''}" autocomplete="off">
+    <h2>${first ? 'Última menstruação' : 'Duração padrão'}</h2>
+    ${first ? `<label class="field">Em que dia ela começou?<input type="date" name="start" required max="${todayStr()}" value="${addDays(todayStr(), -14)}"></label>` : ''}
+    <div class="row2">
+      <label class="field">Ciclo (dias)<input type="number" name="cycleLen" inputmode="numeric" min="20" max="45" value="${H.cycleLen}"></label>
+      <label class="field">Menstruação (dias)<input type="number" name="periodLen" inputmode="numeric" min="2" max="10" value="${H.periodLen}"></label>
+    </div>
+    <p class="hint" style="margin:-4px 2px 16px">O ciclo vai do primeiro dia de uma menstruação até o dia antes da próxima. Na dúvida, deixe 28 e 5: depois de alguns registros o app calcula a sua média sozinho.</p>
+    <div class="actions"><button type="button" class="btn ghost" data-act="close-sheet">Cancelar</button><button type="submit" class="btn primary">Salvar</button></div>
+  </form>`;
+}
+function setFlow(ds, flow){
+  const H = state.health, e = {...(H.days[ds] || {})};
+  if(flow > 0) e.flow = flow; else delete e.flow;
+  if(e.flow || hasLog(e)) H.days[ds] = e; else delete H.days[ds];
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  switch(el.dataset.act){
+    // categorias
+    case 'cats': ui.evDraft = null; openSheet(catList()); break;
+    case 'new-cat': openSheet(catForm(null)); syncCatForm($('#catForm')); break;
+    case 'edit-cat': { const c = CATS[el.closest('[data-cid]').dataset.cid]; if(c){ openSheet(catForm(c)); syncCatForm($('#catForm')); } break; }
+    case 'pick-emoji': { const f = $('#catForm'); if(f){ f.elements.emoji.value = el.dataset.e; syncCatForm(f); } break; }
+    case 'delete-cat': {
+      const id = $('#catForm').dataset.cid, c = CATS[id]; if(!c || id === 'outro') break;
+      const n = state.events.filter(ev => ev.cat === id).length;
+      if(confirm(`Excluir a categoria “${c.label}”?${n ? ` Os ${n} evento${n>1?'s':''} dela passam para “${CATS.outro.label}”.` : ''}`)){
+        state.events.forEach(ev => { if(ev.cat === id) ev.cat = 'outro'; });
+        state.cats = state.cats.filter(x => x.id !== id); rebuildCats(); save(); render(); openSheet(catList()); toast('Categoria excluída');
+      }
+      break; }
+    // aparência
+    case 'appearance': openSheet(appearanceSheet()); break;
+    case 'set-accent':
+      setTheme({accent: el.dataset.k});
+      document.querySelectorAll('.sw[data-k]').forEach(b => b.classList.toggle('on', b === el)); break;
+    // saúde
+    case 'h-month': {
+      const d = +el.dataset.d ? new Date(ui.cy, ui.cm + (+el.dataset.d), 1) : new Date();
+      ui.cy = d.getFullYear(); ui.cm = d.getMonth(); render(); break; }
+    case 'h-go': { const d = parse(el.dataset.date); ui.cy = d.getFullYear(); ui.cm = d.getMonth(); render(); window.scrollTo({top:0, behavior:'smooth'}); break; }
+    case 'h-edit': ui.hEdit = !ui.hEdit; render(); break;
+    case 'h-first': openSheet(hSettingsForm(true)); break;
+    case 'h-settings': openSheet(hSettingsForm(false)); break;
+    case 'h-today': setFlow(todayStr(), 2); save(); render(); toast('Menstruação registrada 🩸'); break;
+    case 'h-log': openSheet(hLogForm(el.dataset.date)); break;
+    case 'h-day': {
+      const ds = el.dataset.date, t = todayStr();
+      if(ds > t){
+        const mk = healthMarks(healthData())[ds];
+        toast(mk === 'pred' ? 'Menstruação prevista 🩸' : mk === 'ovu' ? 'Ovulação prevista 🌸' : mk === 'fert' ? 'Período fértil previsto 🌸' : 'Esse dia ainda não chegou 🙂');
+        break;
+      }
+      if(ui.hEdit){ const cur = (state.health.days[ds] || {}).flow > 0; setFlow(ds, cur ? 0 : 2); save(); render(); }
+      else openSheet(hLogForm(ds));
+      break; }
+  }
+});
+document.addEventListener('input', e => { const f = e.target.form; if(f && f.id === 'catForm') syncCatForm(f); });
+document.addEventListener('change', e => {
+  const f = e.target.form; if(!f) return;
+  if(f.id === 'catForm') syncCatForm(f);
+  if(f.id === 'appearForm' && e.target.name === 'mode') setTheme({mode: e.target.value});
+});
+document.addEventListener('submit', e => {
+  const f = e.target;
+  if(f.id === 'catForm'){
+    e.preventDefault();
+    const label = noHtml(f.elements.label.value).slice(0,24); if(!label) return;
+    const data = cleanCat({id: f.dataset.cid || 'c' + uid(), label, emoji: firstGlyphs(f.elements.emoji.value) || '🏷️',
+      color: (f.querySelector('input[name=color]:checked') || {}).value});
+    const i = state.cats.findIndex(c => c.id === data.id);
+    if(i >= 0) state.cats[i] = data; else state.cats.splice(Math.max(0, state.cats.length - 1), 0, data);  // "Outro" fica por último
+    rebuildCats(); save(); render();
+    if(ui.evDraft){ const d = {...ui.evDraft, cat:data.id}; ui.evDraft = null; openSheet(eventForm(d)); }
+    else openSheet(catList());
+    toast(i >= 0 ? 'Categoria atualizada' : 'Categoria criada 💚');
+  }
+  if(f.id === 'hLog'){
+    e.preventDefault();
+    const ds = f.dataset.date, vals = n => [...f.querySelectorAll(`input[name=${n}]:checked`)].map(x => x.value);
+    const entry = {flow: +f.elements.flow.value || 0, sym: vals('sym'), mood: vals('mood'), extra: vals('extra'), note: f.elements.note.value.trim()};
+    Object.keys(entry).forEach(k => { if(!entry[k] || (Array.isArray(entry[k]) && !entry[k].length)) delete entry[k]; });
+    if(Object.keys(entry).length) state.health.days[ds] = entry; else delete state.health.days[ds];
+    save(); closeSheet(); render(); toast('Registrado 💗');
+  }
+  if(f.id === 'hSet'){
+    e.preventDefault();
+    const H = state.health, clamp = (v, a, b, d) => Math.min(b, Math.max(a, parseInt(v, 10) || d));
+    H.cycleLen = clamp(f.elements.cycleLen.value, 20, 45, 28);
+    H.periodLen = clamp(f.elements.periodLen.value, 2, 10, 5);
+    if(f.dataset.first){
+      const start = f.elements.start.value, t = todayStr(); if(!start) return;
+      for(let i = 0; i < H.periodLen; i++){ const d = addDays(start, i); if(d <= t) setFlow(d, 2); }
+      const d = parse(start); ui.cy = d.getFullYear(); ui.cm = d.getMonth();
+    }
+    save(); closeSheet(); render(); toast('Salvo 💗');
+  }
+});
+
 /* ---------- saudação e mensagem do dia (horário de Brasília) ---------- */
 function brNow(){
   try{
@@ -776,7 +1231,7 @@ function specialDay(dateStr){
 function render(){
   const br = brNow();
   $('#greeting').textContent = `${greeting(br.hour)}, Júlia 💚`;
-  const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, financas:renderFinance, historico:renderHistory};
+  const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, saude:renderHealth, financas:renderFinance, historico:renderHistory};
   if(!views[ui.tab]) ui.tab = 'agenda';
   const sp = specialDay(br.date);
   const love = sp
@@ -785,6 +1240,7 @@ function render(){
   $('#main').innerHTML = love + views[ui.tab]();
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   $('#fab').style.display = ui.tab === 'tarefas' ? 'none' : '';
+  $('#fab').setAttribute('aria-label', ui.tab === 'financas' ? 'Novo lançamento' : ui.tab === 'saude' ? 'Registrar o dia' : 'Novo evento');
 }
 
 /* ---------- painel inferior ---------- */
@@ -794,12 +1250,13 @@ function openSheet(html){
   document.body.classList.add('lock');
 }
 function closeSheet(){
+  ui.evDraft = null;
   $('#sheet').classList.remove('open');
   document.body.classList.remove('lock');
 }
 
 function eventForm(ev){
-  const isNew = !ev;
+  const isNew = !ev || !ev.id;
   ev = ev || {title:'', date: ui.tab==='agenda' ? ui.sel : todayStr(), time:'', cat:'compromisso', yearly:false, note:''};
   return `<form id="evForm" data-id="${isNew?'':ev.id}" autocomplete="off">
     <h2>${isNew ? 'Novo evento' : 'Editar evento'}</h2>
@@ -810,7 +1267,7 @@ function eventForm(ev){
     </div>
     <div class="field" style="margin-bottom:0">Categoria</div>
     <div class="cats">${Object.entries(CATS).map(([k,c]) =>
-      `<label><input type="radio" name="cat" value="${k}" ${ev.cat===k?'checked':''}><span>${c.emoji} ${c.label}</span></label>`).join('')}</div>
+      `<label><input type="radio" name="cat" value="${k}" ${ev.cat===k?'checked':''}><span>${c.emoji} ${c.label}</span></label>`).join('')}<button type="button" class="chip-add" data-act="new-cat-ev">＋ Nova</button></div>
     <div class="field" style="margin-bottom:6px">Repetir</div>
     <div class="seg">${[['none','Não repete'],['weekly','Toda semana'],['yearly','Todo ano']].map(([k,l]) =>
       `<label><input type="radio" name="rep" value="${k}" ${(ev.weekly?'weekly':ev.yearly?'yearly':'none')===k?'checked':''}><span>${l}</span></label>`).join('')}</div>
@@ -839,6 +1296,8 @@ function taskForm(t){
 function settingsSheet(){
   const nEv = state.events.length, nT = state.tasks.length, nB = state.bills.length;
   return `<h2>Ajustes</h2>
+    <button class="menu-btn" data-act="appearance">🎨<div>Aparência<small>Cor do app e tema claro ou escuro</small></div></button>
+    <button class="menu-btn" data-act="cats">🏷️<div>Categorias<small>Criar e editar categorias com nome, emoji e cor</small></div></button>
     <button class="menu-btn" data-act="export">💾<div>Fazer backup<small>Salva um arquivo com tudo (${nEv} eventos, ${nT} tarefas, ${nB} lançamentos)</small></div></button>
     <button class="menu-btn" data-act="import">📥<div>Restaurar backup<small>Carrega um arquivo de backup salvo antes</small></div></button>
     <div class="about">
@@ -851,7 +1310,8 @@ function settingsSheet(){
 
 /* ---------- backup ---------- */
 async function exportData(){
-  const json = JSON.stringify({app:'JujuTasks', exportedAt:new Date().toISOString(), events:state.events, tasks:state.tasks, bills:state.bills}, null, 2);
+  const json = JSON.stringify({app:'JujuTasks', exportedAt:new Date().toISOString(), events:state.events, tasks:state.tasks, bills:state.bills,
+    cats:state.cats, health:state.health, theme:state.theme}, null, 2);
   const name = `jujutasks-backup-${todayStr()}.json`;
   const file = new File([json], name, {type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
@@ -870,7 +1330,7 @@ $('#importFile').addEventListener('change', async e => {
     const data = JSON.parse(await f.text());
     if(!Array.isArray(data.events)) throw new Error('formato');
     if(!confirm(`Restaurar backup com ${data.events.length} eventos e ${(data.tasks||[]).length} tarefas e ${(data.bills||[]).length} lançamentos? Os dados atuais serão substituídos.`)) return;
-    state = {events:data.events, tasks:Array.isArray(data.tasks) ? data.tasks : [], bills:Array.isArray(data.bills) ? data.bills : []};
+    state = normalize(data); rebuildCats(); applyTheme(state.theme);
     save(); closeSheet(); render(); toast('Backup restaurado 💚');
   }catch(err){ toast('Arquivo de backup inválido'); }
 });
@@ -897,7 +1357,16 @@ document.addEventListener('click', e => {
     case 'today': { const n = new Date(); ui.y = n.getFullYear(); ui.m = n.getMonth(); ui.sel = todayStr(); render(); break; }
     case 'pick': ui.sel = el.dataset.date; render(); break;
     case 'year': ui.hy = +el.dataset.y; render(); break;
-    case 'new-ev': openSheet(ui.tab === 'financas' ? billForm(null) : eventForm(null)); if(ui.tab === 'financas') syncBillForm($('#billForm')); break;
+    case 'new-ev':
+      if(ui.tab === 'saude'){ openSheet(hLogForm(todayStr())); break; }
+      openSheet(ui.tab === 'financas' ? billForm(null) : eventForm(null)); if(ui.tab === 'financas') syncBillForm($('#billForm')); break;
+    case 'new-cat-ev': {
+      // guarda o que já foi digitado no evento para voltar a ele depois de criar a categoria
+      const f = $('#evForm'), rep = f.elements.rep.value;
+      ui.evDraft = {id:f.dataset.id || undefined, title:f.elements.title.value, date:f.elements.date.value || todayStr(), time:f.elements.time.value,
+        cat:(f.querySelector('input[name=cat]:checked') || {}).value || 'outro', yearly:rep === 'yearly', weekly:rep === 'weekly', until:f.elements.until.value, note:f.elements.note.value};
+      const keep = ui.evDraft; openSheet(catForm(null)); ui.evDraft = keep; syncCatForm($('#catForm')); break; }
+    case 'back-ev': { const d = ui.evDraft; ui.evDraft = null; if(d) openSheet(eventForm(d)); break; }
     case 'edit-ev': { const f = findEv(el); if(f && f.ev) openSheet(eventForm(f.ev)); break; }
     case 'toggle-ev': {
       const f = findEv(el); if(!f || !f.ev) break;
