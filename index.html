@@ -201,6 +201,19 @@ body.lock2{overflow:hidden}
 .wmid b{font-size:26px;font-weight:750;letter-spacing:-.02em}
 .wmid span{color:var(--muted);font-weight:600}
 .wmid .bar{margin-top:8px}
+.skip .item-title .t{text-decoration:line-through;color:var(--muted)}
+.skip .check{border-style:dashed;opacity:.6}
+.pill.skip-pill{background:var(--surface2);color:var(--muted)}
+.occ-box{background:var(--bg);border-radius:16px;padding:12px 14px;margin-bottom:14px}
+.occ-head{font-size:15px;font-weight:650}
+.occ-box .btn.ghost{background:var(--surface);box-shadow:var(--shadow)}
+.occ-box .btn{padding:12px 8px;font-size:15px}
+.occ-head small{font-weight:500;color:var(--muted);font-size:13px}
+.pick-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);font-size:15px}
+.pick-row:last-child{border-bottom:none}
+.pick-row input{width:22px;height:22px;flex:none;accent-color:var(--danger);margin:0}
+.btn.primary.danger-fill{background:var(--danger)}
+.btn:disabled{opacity:.45}
 /* categorias e aparência */
 .cat-emoji{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px}
 .chev{flex:none;color:var(--muted);font-size:22px;line-height:1}
@@ -431,21 +444,23 @@ function occFor(ev, year){
   const [y,m,d] = ev.date.split('-').map(Number);
   if(ev.weekly){
     if(year < y) return [];
-    const start = parse(ev.date), out = [], done = new Set(ev.doneDates || []);
+    const start = parse(ev.date), out = [], done = new Set(ev.doneDates || []), excl = new Set(ev.excluded || []), skp = new Set(ev.skipped || []);
     const cur = new Date(Math.max(start.getTime(), new Date(year,0,1).getTime()));
     cur.setDate(cur.getDate() + (start.getDay() - cur.getDay() + 7) % 7);
     while(cur.getFullYear() === year){
       const ds = ymd(cur);
       if(ev.until && ds > ev.until) break;
-      out.push({ev, date:ds, year, done:done.has(ds)});
+      if(!excl.has(ds)) out.push({ev, date:ds, year, done:done.has(ds), skip:skp.has(ds)});
       cur.setDate(cur.getDate() + 7);
     }
     return out;
   }
-  if(!ev.yearly) return y===year ? [{ev, date:ev.date, year, done:!!ev.done}] : [];
+  if(!ev.yearly) return y===year ? [{ev, date:ev.date, year, done:!!ev.done, skip:(ev.skipped||[]).includes(ev.date)}] : [];
   if(year < y) return [];
   const dd = (m===2 && d===29 && !isLeap(year)) ? 28 : d;
-  return [{ev, date:`${year}-${pad(m)}-${pad(dd)}`, year, done:(ev.doneYears||[]).includes(year)}];
+  const ds = `${year}-${pad(m)}-${pad(dd)}`;
+  if((ev.excluded||[]).includes(ds)) return [];
+  return [{ev, date:ds, year, done:(ev.doneYears||[]).includes(year), skip:(ev.skipped||[]).includes(ds)}];
 }
 const weeklyLabel = ev => { const w = parse(ev.date).getDay(); return `${w===0||w===6?'todo':'toda'} ${WEEK[w].replace('-feira','')}`; };
 const cmpOcc = (a,b) => a.date.localeCompare(b.date) || (a.ev.time||'99').localeCompare(b.ev.time||'99');
@@ -453,7 +468,7 @@ const occInYear = year => state.events.flatMap(e => occFor(e, year)).sort(cmpOcc
 
 /* ---------- estado da tela ---------- */
 const now = new Date();
-const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), showDone:false, full:false, cy:now.getFullYear(), cm:now.getMonth(), hEdit:false, evDraft:null, fm:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` };
+const ui = { tab:'agenda', y:now.getFullYear(), m:now.getMonth(), sel:todayStr(), hy:now.getFullYear(), hv:'retro', showDone:false, full:false, cy:now.getFullYear(), cm:now.getMonth(), hEdit:false, evDraft:null, fm:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` };
 try{ const t = localStorage.getItem('julhatasks.tab'); if(t) ui.tab = t; }catch(e){}
 
 /* ---------- linhas ---------- */
@@ -464,13 +479,13 @@ function occRow(o, opts={}){
   if(o.ev.yearly) sub.push('todo ano');
   if(o.ev.weekly) sub.push(weeklyLabel(o.ev));
   if(o.ev.note) sub.push(esc(o.ev.note));
-  return `<div class="item ${o.done?'done':''}" data-id="${o.ev.id}" data-year="${o.year}" data-date="${o.date}">
+  return `<div class="item ${o.done?'done':''} ${o.skip?'skip':''}" data-id="${o.ev.id}" data-year="${o.year}" data-date="${o.date}">
     <button class="check" data-act="toggle-ev" aria-label="Marcar como feito"></button>
     <div class="item-body" data-act="edit-ev">
       <div class="item-title"><span class="dot" style="background:${c.color}"></span><span class="t">${esc(o.ev.title)}</span></div>
       <div class="item-sub">${c.emoji} ${sub.length ? sub.join(' · ') : c.label}</div>
     </div>
-    ${opts.right || ''}
+    ${o.skip ? `<span class="pill skip-pill">${o.date < todayStr() ? 'não fui' : 'não vou'}</span>` : (opts.right || '')}
   </div>`;
 }
 function taskRow(t){
@@ -494,7 +509,7 @@ function renderAgenda(){
   for(let i=0;i<first;i++) cells += '<div></div>';
   for(let d=1; d<=days; d++){
     const ds = `${y}-${pad(m+1)}-${pad(d)}`;
-    const dots = (byDay[ds]||[]).slice(0,3).map(o => `<i style="background:${cat(o.ev).color};${o.done?'opacity:.35':''}"></i>`).join('');
+    const dots = (byDay[ds]||[]).slice(0,3).map(o => `<i style="background:${cat(o.ev).color};${o.done||o.skip?'opacity:.35':''}"></i>`).join('');
     cells += `<button class="day ${ds===t?'today':''} ${ds===ui.sel?'sel':''}" data-act="pick" data-date="${ds}"><span>${d}</span><b>${dots}</b></button>`;
   }
   const selList = occInYear(+ui.sel.slice(0,4)).filter(o => o.date === ui.sel);
@@ -521,20 +536,21 @@ function renderUpcoming(){
   const t = todayStr(), y = new Date().getFullYear();
   const all = [...occInYear(y-1), ...occInYear(y), ...occInYear(y+1)];
   // eventos semanais: só a última semana em pendentes e só a próxima vez em "próximos"
-  const pend = all.filter(o => o.date < t && !o.done && dayDiff(o.date, t) <= (o.ev.weekly ? 7 : 60));
+  const pend = all.filter(o => o.date < t && !o.done && !o.skip && dayDiff(o.date, t) <= (o.ev.weekly ? 7 : 60));
   const hoje = all.filter(o => o.date === t);
   const seenWeekly = new Set();
   const next = all.filter(o => {
     if(!(o.date > t && dayDiff(t, o.date) <= 365)) return false;
     if(!o.ev.weekly) return true;
     if(seenWeekly.has(o.ev.id) || all.some(x => x.ev === o.ev && x.date === t)) return false;
+    if(o.skip) return true;  // semanas marcadas "não vou" aparecem e a próxima de verdade também
     seenWeekly.add(o.ev.id); return true;
   });
-  const feat = next.find(o => !o.done);
+  const feat = next.find(o => !o.done && !o.skip);
   let html = '';
   if(feat){
     const n = dayDiff(t, feat.date);
-    html += `<div class="hero" data-id="${feat.ev.id}" data-year="${feat.year}" data-act="edit-ev">
+    html += `<div class="hero" data-id="${feat.ev.id}" data-year="${feat.year}" data-date="${feat.date}" data-act="edit-ev">
       <small>Próximo evento</small>
       <h3>${cat(feat.ev).emoji} ${esc(feat.ev.title)}</h3>
       <p>${fmtLong(feat.date)}${feat.ev.time ? ' · '+feat.ev.time : ''}</p>
@@ -591,7 +607,7 @@ function renderHistory(){
   const ylist = [...years].sort((a,b) => b-a);
   const occ = occInYear(ui.hy);
   const t = todayStr();
-  const relevant = occ.filter(o => o.date <= t || o.done);
+  const relevant = occ.filter(o => (o.date <= t || o.done) && !o.skip);
   const done = occ.filter(o => o.done);
   const pct = relevant.length ? Math.round(done.length / relevant.length * 100) : 0;
   const byCat = {};
@@ -601,11 +617,34 @@ function renderHistory(){
     `<div class="cat-row"><span>${CATS[k].emoji} ${CATS[k].label}</span><div class="bar"><i style="width:${byCat[k]/max*100}%;background:${CATS[k].color}"></i></div><b>${byCat[k]}</b></div>`).join('');
   const months = {};
   occ.forEach(o => (months[+o.date.slice(5,7)] ??= []).push(o));
-  return `
+  const sk = occ.filter(o => o.skip), skPast = sk.filter(o => o.date < t), skFut = sk.filter(o => o.date >= t);
+  const top = `
   <div class="years">${ylist.map(y => `<button class="chip ${y===ui.hy?'on':''}" data-act="year" data-y="${y}">${y}</button>`).join('')}</div>
-  <div class="card" style="margin-top:8px">
+  <div class="seg" style="margin:8px 0 0">${[['retro','Retrospectiva'],['skip',`Não fui / não vou${sk.length ? ` (${sk.length})` : ''}`]].map(([k,l]) =>
+    `<label><input type="radio" name="hv" value="${k}" ${ui.hv===k?'checked':''} data-act="hview"><span>${l}</span></label>`).join('')}</div>`;
+  if(ui.hv === 'skip'){
+    const byC = {};
+    sk.forEach(o => byC[o.ev.cat] = (byC[o.ev.cat]||0) + 1);
+    const mx = Math.max(1, ...Object.values(byC));
+    return top + `
+    <div class="card" style="margin-top:12px">
+      <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:8px">Em ${ui.hy}</div>
+      <div class="fin-split" style="margin-top:0"><div><small>Não fui</small><b>${skPast.length}</b></div><div><small>Não vou</small><b>${skFut.length}</b></div></div>
+      ${Object.keys(CATS).filter(k => byC[k]).map(k =>
+        `<div class="cat-row"><span>${CATS[k].emoji} ${CATS[k].label}</span><div class="bar"><i style="width:${byC[k]/mx*100}%;background:${CATS[k].color}"></i></div><b>${byC[k]}</b></div>`).join('')}
+    </div>
+    ${skFut.length ? `<div class="section-title">Não vou <small>${skFut.length}</small></div>
+      <div class="card"><div class="list">${skFut.map(o => occRow(o,{showDate:true})).join('')}</div></div>` : ''}
+    ${skPast.length ? `<div class="section-title">Não fui <small>${skPast.length}</small></div>
+      <div class="card"><div class="list">${skPast.slice().reverse().map(o => occRow(o,{showDate:true})).join('')}</div></div>` : ''}
+    ${sk.length ? '<p class="hint" style="text-align:center;margin-top:14px">Toque num evento para desfazer.</p>'
+      : `<div class="card" style="margin-top:12px"><div class="empty"><b>🙌</b>Nenhum evento marcado como “não fui” ou “não vou” em ${ui.hy}.<br>Para marcar, toque num evento e escolha a opção.</div></div>`}`;
+  }
+  return top + `
+  <div class="card" style="margin-top:12px">
     <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:8px">Retrospectiva ${ui.hy}</div>
     <div class="stat-big">${done.length} <span>evento${done.length===1?'':'s'} concluído${done.length===1?'':'s'}</span></div>
+    ${sk.length ? `<div style="font-size:13px;color:var(--muted);margin-top:6px">${skPast.length} não fui · ${skFut.length} não vou</div>` : ''}
     ${relevant.length ? `<div class="bar"><i style="width:${pct}%"></i></div>
       <div style="font-size:13px;color:var(--muted);margin-top:6px">${pct}% do que já passou foi marcado como feito</div>` : ''}
     ${catRows}
@@ -1373,11 +1412,25 @@ function closeSheet(){
   document.body.classList.remove('lock');
 }
 
-function eventForm(ev){
+function eventForm(ev, occ){
   const isNew = !ev || !ev.id;
   ev = ev || {title:'', date: ui.tab==='agenda' ? ui.sel : todayStr(), time:'', cat:'compromisso', yearly:false, note:''};
-  return `<form id="evForm" data-id="${isNew?'':ev.id}" autocomplete="off">
+  const saved = !isNew && state.events.find(e => e.id === ev.id);
+  const repeating = saved && (saved.weekly || saved.yearly);
+  if(!occ && saved && !repeating) occ = saved.date;
+  const skipped = saved && occ && (saved.skipped||[]).includes(occ), past = occ && occ < todayStr();
+  const nExcl = saved ? (saved.excluded||[]).length : 0;
+  return `<form id="evForm" data-id="${isNew?'':ev.id}" data-occ="${occ||''}" autocomplete="off">
     <h2>${isNew ? 'Novo evento' : 'Editar evento'}</h2>
+    ${saved && occ ? `<div class="occ-box">
+      <div class="occ-head">📅 ${cap(fmtLong(occ))}${repeating ? ' <small>· só este dia</small>' : ''}</div>
+      <div class="hbtns" style="margin-top:10px">
+        <button type="button" class="btn ${skipped ? 'primary' : 'ghost'}" data-act="skip-occ">${skipped ? '↩️ Desfazer' : past ? '🚫 Não fui' : '🚫 Não vou'}</button>
+        ${repeating ? `<button type="button" class="btn ghost danger" style="flex:1" data-act="del-occ">🗑️ Excluir dia</button>` : ''}
+      </div>
+      ${skipped ? `<p class="hint" style="margin:8px 2px 0">Marcado como “${past ? 'não fui' : 'não vou'}”.</p>` : ''}
+    </div>` : ''}
+    ${repeating ? `<button type="button" class="menu-btn" data-act="pick-occ">🗓️<div>Escolher dias para excluir<small>${nExcl ? `${nExcl} dia${nExcl>1?'s':''} já excluído${nExcl>1?'s':''} · ` : ''}Tira só os dias que você escolher</small></div></button>` : ''}
     <label class="field">O que é<input name="title" required maxlength="120" value="${esc(ev.title)}" placeholder="Ex.: Aniversário da Ana"></label>
     <div class="row2">
       <label class="field">Data<input type="date" name="date" required value="${ev.date}"></label>
@@ -1392,11 +1445,60 @@ function eventForm(ev){
     <label class="field" data-rep="weekly" ${ev.weekly?'':'hidden'}>Repetir até (opcional)<input type="date" name="until" value="${ev.until||''}"></label>
     <label class="field">Observação<textarea name="note" rows="2" maxlength="300" placeholder="Opcional">${esc(ev.note||'')}</textarea></label>
     <div class="actions">
-      ${isNew ? `<button type="button" class="btn ghost" data-act="close-sheet">Cancelar</button>` : `<button type="button" class="btn ghost danger" data-act="delete-ev">Excluir</button>`}
+      ${isNew ? `<button type="button" class="btn ghost" data-act="close-sheet">Cancelar</button>` : `<button type="button" class="btn ghost danger" data-act="delete-ev">${repeating ? 'Excluir todos' : 'Excluir'}</button>`}
       <button type="submit" class="btn primary">Salvar</button>
     </div>
   </form>`;
 }
+
+/* lista de dias de um evento repetido para escolher quais excluir */
+function occPicker(ev){
+  const t = todayStr(), cy = new Date().getFullYear(), y0 = +ev.date.slice(0,4);
+  let occ = [];
+  for(let y = Math.max(y0, cy - 1); y <= cy + (ev.yearly ? 5 : 1); y++) occ.push(...occFor(ev, y));
+  if(ev.weekly) occ = occ.filter(o => dayDiff(o.date, t) <= 56 && dayDiff(t, o.date) <= 366);
+  const groups = {};
+  occ.forEach(o => (groups[o.date.slice(0,7)] ??= []).push(o));
+  const nExcl = (ev.excluded||[]).length;
+  return `<form id="occForm" data-id="${ev.id}">
+    <h2>Escolher dias para excluir</h2>
+    <p class="hint" style="margin:-6px 2px 10px">${esc(ev.title)} · marque os dias que quer tirar da agenda. Os outros continuam.</p>
+    ${Object.keys(groups).map(k => `<div class="section-title" style="margin-top:14px">${fmtYM(k)}</div>
+      <div class="list">${groups[k].map(o => `<label class="pick-row"><input type="checkbox" name="d" value="${o.date}">
+        <span>${cap(fmtLong(o.date))}${o.date === t ? ' · hoje' : ''}${o.done ? ' · feito ✓' : ''}${o.skip ? (o.date < t ? ' · não fui' : ' · não vou') : ''}</span></label>`).join('')}</div>`).join('')
+      || '<div class="empty">Nenhum dia para mostrar.</div>'}
+    ${nExcl ? `<button type="button" class="menu-btn" style="margin-top:14px" data-act="occ-restore">♻️<div>Restaurar dias excluídos<small>${nExcl} dia${nExcl>1?'s':''} excluído${nExcl>1?'s':''} antes voltam para a agenda</small></div></button>` : ''}
+    <div class="actions" style="position:sticky;bottom:0;background:var(--surface);padding-top:10px">
+      <button type="button" class="btn ghost" data-act="occ-back">Voltar</button>
+      <button type="submit" class="btn primary danger-fill" id="occDel" disabled>Excluir</button>
+    </div>
+  </form>`;
+}
+function excludeDates(ev, dates){
+  const ds = new Set(dates);
+  ev.excluded = [...new Set([...(ev.excluded||[]), ...dates])].sort();
+  ev.doneDates = (ev.doneDates||[]).filter(d => !ds.has(d));
+  ev.skipped = (ev.skipped||[]).filter(d => !ds.has(d));
+  if(ev.yearly) ev.doneYears = (ev.doneYears||[]).filter(y => !dates.some(d => +d.slice(0,4) === y));
+}
+function setOccDone(ev, date, done){
+  if(ev.weekly){ const s = new Set(ev.doneDates||[]); done ? s.add(date) : s.delete(date); ev.doneDates = [...s]; }
+  else if(ev.yearly){ const s = new Set(ev.doneYears||[]), y = +date.slice(0,4); done ? s.add(y) : s.delete(y); ev.doneYears = [...s]; }
+  else ev.done = done;
+}
+document.addEventListener('change', e => {
+  const f = e.target.form;
+  if(f && f.id === 'occForm'){ const n = f.querySelectorAll('input[name=d]:checked').length, b = $('#occDel'); b.disabled = !n; b.textContent = n ? `Excluir ${n} dia${n>1?'s':''}` : 'Excluir'; }
+  if(e.target.name === 'hv' && e.target.dataset.act === 'hview'){ ui.hv = e.target.value; render(); }
+});
+document.addEventListener('submit', e => {
+  const f = e.target; if(f.id !== 'occForm') return;
+  e.preventDefault();
+  const ev = state.events.find(x => x.id === f.dataset.id); if(!ev) return;
+  const dates = [...f.querySelectorAll('input[name=d]:checked')].map(x => x.value); if(!dates.length) return;
+  if(!confirm(`Excluir ${dates.length} dia${dates.length>1?'s':''} de “${ev.title}”? Os outros dias continuam na agenda.`)) return;
+  excludeDates(ev, dates); save(); render(); openSheet(eventForm(ev)); toast(`${dates.length} dia${dates.length>1?'s':''} excluído${dates.length>1?'s':''}`);
+});
 
 function taskForm(t){
   return `<form id="taskEdit" data-tid="${t.id}" autocomplete="off">
@@ -1481,11 +1583,29 @@ document.addEventListener('click', e => {
     case 'new-cat-ev': {
       // guarda o que já foi digitado no evento para voltar a ele depois de criar a categoria
       const f = $('#evForm'), rep = f.elements.rep.value;
-      ui.evDraft = {id:f.dataset.id || undefined, title:f.elements.title.value, date:f.elements.date.value || todayStr(), time:f.elements.time.value,
+      ui.evDraft = {occ:f.dataset.occ || undefined, id:f.dataset.id || undefined, title:f.elements.title.value, date:f.elements.date.value || todayStr(), time:f.elements.time.value,
         cat:(f.querySelector('input[name=cat]:checked') || {}).value || 'outro', yearly:rep === 'yearly', weekly:rep === 'weekly', until:f.elements.until.value, note:f.elements.note.value};
       const keep = ui.evDraft; openSheet(catForm(null)); ui.evDraft = keep; syncCatForm($('#catForm')); break; }
-    case 'back-ev': { const d = ui.evDraft; ui.evDraft = null; if(d) openSheet(eventForm(d)); break; }
-    case 'edit-ev': { const f = findEv(el); if(f && f.ev) openSheet(eventForm(f.ev)); break; }
+    case 'back-ev': { const d = ui.evDraft; ui.evDraft = null; if(d) openSheet(eventForm(d, d.occ)); break; }
+    case 'edit-ev': { const f = findEv(el); if(f && f.ev) openSheet(eventForm(f.ev, (el.closest('[data-date]') || {dataset:{}}).dataset.date)); break; }
+    case 'skip-occ': {
+      const f = $('#evForm'), ev = state.events.find(x => x.id === f.dataset.id), d = f.dataset.occ; if(!ev || !d) break;
+      const s = new Set(ev.skipped||[]), now = !s.has(d);
+      now ? s.add(d) : s.delete(d); ev.skipped = [...s];
+      if(now) setOccDone(ev, d, false);
+      save(); closeSheet(); render();
+      toast(now ? (d < todayStr() ? 'Marcado: não fui' : 'Marcado: não vou') : 'Desmarcado');
+      break; }
+    case 'del-occ': {
+      const f = $('#evForm'), ev = state.events.find(x => x.id === f.dataset.id), d = f.dataset.occ; if(!ev || !d) break;
+      if(confirm(`Excluir só ${fmtLong(d)}? Os outros dias de “${ev.title}” continuam.`)){ excludeDates(ev, [d]); save(); closeSheet(); render(); toast('Dia excluído'); }
+      break; }
+    case 'pick-occ': { const ev = state.events.find(x => x.id === $('#evForm').dataset.id); if(ev){ ui.occBack = $('#evForm').dataset.occ; openSheet(occPicker(ev)); } break; }
+    case 'occ-back': { const ev = state.events.find(x => x.id === $('#occForm').dataset.id); if(ev) openSheet(eventForm(ev, ui.occBack)); break; }
+    case 'occ-restore': {
+      const ev = state.events.find(x => x.id === $('#occForm').dataset.id); if(!ev) break;
+      if(confirm('Trazer de volta todos os dias excluídos deste evento?')){ ev.excluded = []; save(); render(); openSheet(occPicker(ev)); toast('Dias restaurados'); }
+      break; }
     case 'toggle-ev': {
       const f = findEv(el); if(!f || !f.ev) break;
       let nowDone;
@@ -1498,6 +1618,7 @@ document.addEventListener('click', e => {
         nowDone = !s.has(f.year); nowDone ? s.add(f.year) : s.delete(f.year);
         f.ev.doneYears = [...s];
       } else { f.ev.done = nowDone = !f.ev.done; }
+      if(nowDone){ const d = (el.closest('[data-date]') || {dataset:{}}).dataset.date; if(d) f.ev.skipped = (f.ev.skipped||[]).filter(x => x !== d); }
       save(); render(); if(nowDone) toast('Feito! 💚'); break; }
     case 'delete-ev': {
       const id = $('#evForm').dataset.id;
@@ -1555,6 +1676,7 @@ document.addEventListener('submit', e => {
     if(id){
       const ev = state.events.find(e => e.id === id);
       if(ev){
+        if(!data.weekly && !data.yearly && ev.date !== data.date && (ev.skipped||[]).includes(ev.date)) ev.skipped = [data.date];
         if(ev.yearly && !data.yearly){ ev.done = (ev.doneYears||[]).includes(+data.date.slice(0,4)); }
         if(!ev.yearly && data.yearly){ ev.doneYears = ev.done ? [+ev.date.slice(0,4)] : []; }
         Object.assign(ev, data);
