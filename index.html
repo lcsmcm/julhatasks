@@ -223,6 +223,17 @@ body.lock2{overflow:hidden}
 .note b{font-size:15px;line-height:1.3;word-break:break-word}
 .note p{margin:0;font-size:13px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .note small{margin-top:auto;font-size:11px;color:var(--muted);font-weight:600}
+.note{cursor:pointer}
+.note-top{display:flex;align-items:flex-start;gap:8px}
+.note-top b{flex:1;min-width:0}
+.note .check{width:24px;height:24px;margin:-2px -2px 0 0;background:var(--surface)}
+.note.done .check{background:var(--green)}
+.note.done .check::after{left:7px;top:2px}
+.note.done b{text-decoration:line-through;opacity:.55}
+.note.done p{opacity:.6}
+.nv-title{display:flex;align-items:center;gap:12px}
+.nv-title #noteTitle{flex:1;min-width:0}
+.nv-title.done #noteTitle{text-decoration:line-through;opacity:.55}
 .nc-verde{background:var(--green-soft)!important}
 .nc-amarelo{background:var(--nc-amarelo)!important}
 .nc-rosa{background:var(--nc-rosa)!important}
@@ -397,7 +408,7 @@ try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s &
   <div class="nv-colors" id="noteColors" hidden></div>
   <div class="nv-tools"><button data-act="note-check">✅ Item de lista</button><span class="nv-status" id="noteInfo"></span></div>
   <div class="nv-body">
-    <input id="noteTitle" placeholder="Título" maxlength="120" autocomplete="off">
+    <div class="nv-title" id="noteTitleRow"><button class="check" data-act="note-done" aria-label="Marcar nota como concluída"></button><input id="noteTitle" placeholder="Título" maxlength="120" autocomplete="off"></div>
     <textarea id="noteBody" placeholder="Escreva o que quiser…"></textarea>
   </div>
 </div>
@@ -1365,18 +1376,19 @@ function noteCard(n){
   const lines = (n.body || '').split('\n').filter(l => l.trim());
   const title = n.title.trim() || lines.shift() || 'Nota sem título';
   const c = checkCount(n.body || '');
-  return `<button class="note nc-${n.color || 'padrao'}" data-act="open-note" data-nid="${n.id}">
-    <b>${n.pinned ? '📌 ' : ''}${esc(title)}</b>${lines.length ? `<p>${lines.slice(0,6).map(esc).join('<br>')}</p>` : ''}
-    <small>${fmtNoteDate(n.updated)}${c.total ? ` · ${c.done}/${c.total} ✓` : ''}</small></button>`;
+  return `<div class="note nc-${n.color || 'padrao'} ${n.done ? 'done' : ''}" role="button" tabindex="0" data-act="open-note" data-nid="${n.id}">
+    <div class="note-top"><b>${n.pinned && !n.done ? '📌 ' : ''}${esc(title)}</b><button class="check" data-act="note-done" data-nid="${n.id}" aria-label="${n.done ? 'Desmarcar nota' : 'Marcar nota como concluída'}"></button></div>${lines.length ? `<p>${lines.slice(0,6).map(esc).join('<br>')}</p>` : ''}
+    <small>${fmtNoteDate(n.updated)}${c.total ? ` · ${c.done}/${c.total} ✓` : ''}</small></div>`;
 }
 function noteResults(){
   const q = (ui.nq || '').trim().toLowerCase();
   const list = state.notes.filter(n => !q || `${n.title} ${n.body}`.toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
-  const pinned = list.filter(n => n.pinned), rest = list.filter(n => !n.pinned);
+  const pinned = list.filter(n => n.pinned && !n.done), rest = list.filter(n => !n.pinned && !n.done), done = list.filter(n => n.done);
   if(!list.length) return q ? `<div class="card" style="margin-top:12px"><div class="empty"><b>🔍</b>Nenhuma nota com “${esc(ui.nq.trim())}”.</div></div>`
     : `<div class="card" style="margin-top:12px"><div class="empty"><b>📝</b>Nenhuma nota ainda.<br>Toque no + para escrever a primeira.</div></div>`;
   return (pinned.length ? `<div class="section-title">Fixadas</div><div class="notes-grid">${pinned.map(noteCard).join('')}</div>` : '')
-    + (rest.length ? `<div class="section-title">${pinned.length ? 'Outras notas' : 'Notas'} <small>${rest.length}</small></div><div class="notes-grid">${rest.map(noteCard).join('')}</div>` : '');
+    + (rest.length ? `<div class="section-title">${pinned.length ? 'Outras notas' : 'Notas'} <small>${rest.length}</small></div><div class="notes-grid">${rest.map(noteCard).join('')}</div>` : '')
+    + (done.length ? `<div class="section-title">✅ Concluídas <small>${done.length}</small></div><div class="notes-grid">${done.map(noteCard).join('')}</div>` : '');
 }
 function renderNotes(){
   return `<input class="search" id="noteSearch" type="search" placeholder="🔍 Buscar nas notas" value="${esc(ui.nq || '')}" autocomplete="off">
@@ -1390,6 +1402,7 @@ function noteInfo(){ const c = checkCount($('#noteBody').value); $('#noteInfo').
 function paintNote(n){
   $('#noteView').className = `fullcal noteview nc-${n.color || 'padrao'}`;
   $('#notePin').classList.toggle('on', !!n.pinned);
+  $('#noteTitleRow').classList.toggle('done', !!n.done);
   $('#noteColors').innerHTML = Object.entries(NOTE_COLORS).map(([k, l]) =>
     `<button class="nc-${k} ${(n.color||'padrao') === k ? 'on' : ''}" data-act="note-setcolor" data-c="${k}" aria-label="${l}"></button>`).join('');
 }
@@ -1460,6 +1473,12 @@ document.addEventListener('click', e => {
   switch(el.dataset.act){
     case 'open-note': openNote(el.dataset.nid); break;
     case 'note-close': closeNote(); break;
+    case 'note-done': {
+      const n = el.dataset.nid ? state.notes.find(x => x.id === el.dataset.nid) : curNote(); if(!n) break;
+      n.done = !n.done; save();
+      if(ui.note === n.id) paintNote(n); else render();
+      toast(n.done ? 'Nota concluída ✅' : 'Nota desmarcada');
+      break; }
     case 'note-pin': { const n = curNote(); if(n){ n.pinned = !n.pinned; save(); paintNote(n); toast(n.pinned ? 'Fixada no topo 📌' : 'Desafixada'); } break; }
     case 'note-color': $('#noteColors').hidden = !$('#noteColors').hidden; break;
     case 'note-setcolor': { const n = curNote(); if(n){ n.color = el.dataset.c; save(); paintNote(n); } break; }
