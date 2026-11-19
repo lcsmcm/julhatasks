@@ -20,17 +20,18 @@
   --shadow:0 1px 2px rgba(20,40,30,.05),0 6px 20px rgba(20,40,30,.06);
   --fab-shadow:rgba(47,125,85,.35); --grad1:#5DBA8A; --grad2:#24684A;
   --period:#E05A7A; --period-soft:#FCE4EA; --fertile:#3A9CBE; --fertile-soft:#DCF0F7; --fertile-ink:#1F6E8A;
+  --nc-amarelo:#FFF3C8; --nc-rosa:#FCE3EC; --nc-azul:#DFEEFA; --nc-lilas:#EBE4F8;
   color-scheme:light dark;
 }
 :root[data-mode=light]{color-scheme:light}
 @media (prefers-color-scheme:dark){
   :root:not([data-mode=light]){--bg:#0F1612;--surface:#17211B;--surface2:#1D2A22;--text:#E6EEE8;--muted:#8F9C94;--line:#26332B;
     --green:#4FB37F;--green-soft:#1E3A2B;--green-ink:#A3E0BD;--danger:#E07A73;--shadow:none;
-    --period:#F0728F;--period-soft:#4A2230;--fertile:#5BB8D8;--fertile-soft:#173A47;--fertile-ink:#A6DDF0}
+    --period:#F0728F;--period-soft:#4A2230;--fertile:#5BB8D8;--fertile-soft:#173A47;--fertile-ink:#A6DDF0;--nc-amarelo:#3A331C;--nc-rosa:#3D2330;--nc-azul:#1C3040;--nc-lilas:#2D2640}
 }
 :root[data-mode=dark]{color-scheme:dark;--bg:#0F1612;--surface:#17211B;--surface2:#1D2A22;--text:#E6EEE8;--muted:#8F9C94;--line:#26332B;
   --green:#4FB37F;--green-soft:#1E3A2B;--green-ink:#A3E0BD;--danger:#E07A73;--shadow:none;
-  --period:#F0728F;--period-soft:#4A2230;--fertile:#5BB8D8;--fertile-soft:#173A47;--fertile-ink:#A6DDF0}
+  --period:#F0728F;--period-soft:#4A2230;--fertile:#5BB8D8;--fertile-soft:#173A47;--fertile-ink:#A6DDF0;--nc-amarelo:#3A331C;--nc-rosa:#3D2330;--nc-azul:#1C3040;--nc-lilas:#2D2640}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -214,6 +215,30 @@ body.lock2{overflow:hidden}
 .pick-row input{width:22px;height:22px;flex:none;accent-color:var(--danger);margin:0}
 .btn.primary.danger-fill{background:var(--danger)}
 .btn:disabled{opacity:.45}
+/* notas */
+.search{display:block;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 14px;outline:none;-webkit-appearance:none;appearance:none}
+.search:focus{border-color:var(--green)}
+.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{text-align:left;border:none;border-radius:18px;padding:14px;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px;min-height:100px;overflow:hidden;color:var(--text)}
+.note b{font-size:15px;line-height:1.3;word-break:break-word}
+.note p{margin:0;font-size:13px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.note small{margin-top:auto;font-size:11px;color:var(--muted);font-weight:600}
+.nc-verde{background:var(--green-soft)!important}
+.nc-amarelo{background:var(--nc-amarelo)!important}
+.nc-rosa{background:var(--nc-rosa)!important}
+.nc-azul{background:var(--nc-azul)!important}
+.nc-lilas{background:var(--nc-lilas)!important}
+.noteview .icon-btn{font-size:17px}
+.noteview .icon-btn.on{box-shadow:0 0 0 2px var(--green)}
+.nv-status{font-size:12px;color:var(--muted);font-weight:600}
+.nv-tools{display:flex;gap:10px;align-items:center;padding:2px 20px 6px;max-width:560px;width:100%;margin:0 auto}
+.nv-tools button{border:none;background:var(--surface2);border-radius:999px;padding:8px 14px;font-weight:650;font-size:14px}
+.nv-colors{display:flex;gap:12px;padding:4px 20px 10px;max-width:560px;width:100%;margin:0 auto}
+.nv-colors button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);padding:0;background:var(--surface)}
+.nv-colors button.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+.nv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px 40vh;max-width:560px;width:100%;margin:0 auto}
+#noteTitle{display:block;width:100%;border:none;background:none;outline:none;font-size:24px;font-weight:750;letter-spacing:-.02em;padding:8px 0;color:var(--text)}
+#noteBody{display:block;width:100%;border:none;background:none;outline:none;resize:none;font-size:17px;line-height:1.55;min-height:50vh;padding:0;color:var(--text);overflow:hidden}
 /* categorias e aparência */
 .cat-emoji{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px}
 .chev{flex:none;color:var(--muted);font-size:22px;line-height:1}
@@ -349,6 +374,8 @@ try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s &
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Próximos</button>
   <button class="tab" data-act="tab" data-tab="tarefas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/></svg>Tarefas</button>
+  <button class="tab" data-act="tab" data-tab="notas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3H6.5a2.5 2.5 0 0 0-2.5 2.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V8.5z"/><path d="M14.5 3v5.5H20M8 13h8M8 17h5"/></svg>Notas</button>
   <button class="tab" data-act="tab" data-tab="saude">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-9.3-9.4C1.6 8.6 3.6 5 7.1 5c2.1 0 3.6 1.2 4.9 3 1.3-1.8 2.8-3 4.9-3 3.5 0 5.5 3.6 4.4 6.6C19.5 16.4 12 21 12 21z"/></svg>Saúde</button>
   <button class="tab" data-act="tab" data-tab="financas">
@@ -356,6 +383,24 @@ try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s &
   <button class="tab" data-act="tab" data-tab="historico">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Histórico</button>
 </nav>
+
+<div class="fullcal noteview" id="noteView" hidden>
+  <div class="fc-head">
+    <button class="icon-btn" data-act="note-close" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <span class="nv-status" id="noteStatus"></span>
+    <div style="display:flex;gap:8px">
+      <button class="icon-btn" data-act="note-pin" id="notePin" aria-label="Fixar no topo">📌</button>
+      <button class="icon-btn" data-act="note-color" aria-label="Cor da nota">🎨</button>
+      <button class="icon-btn" data-act="note-del" aria-label="Excluir nota">🗑️</button>
+    </div>
+  </div>
+  <div class="nv-colors" id="noteColors" hidden></div>
+  <div class="nv-tools"><button data-act="note-check">✅ Item de lista</button><span class="nv-status" id="noteInfo"></span></div>
+  <div class="nv-body">
+    <input id="noteTitle" placeholder="Título" maxlength="120" autocomplete="off">
+    <textarea id="noteBody" placeholder="Escreva o que quiser…"></textarea>
+  </div>
+</div>
 
 <div class="fullcal" id="fullcal" hidden>
   <div class="fc-head"><button class="icon-btn" data-act="full-close" aria-label="Fechar">
@@ -402,6 +447,7 @@ function normalize(s){
   const h = s.health && typeof s.health === 'object' ? s.health : {};
   return {
     events: arr(s.events), tasks: arr(s.tasks), bills: arr(s.bills), cats,
+    notes: arr(s.notes).filter(n => n && n.id),
     health: {days: h.days && typeof h.days === 'object' ? h.days : {}, cycleLen: +h.cycleLen || 28, periodLen: +h.periodLen || 5, waterGoal: +h.waterGoal || 2250},
     theme: s.theme && typeof s.theme === 'object' ? s.theme : {accent:'verde', mode:'auto'},
   };
@@ -1305,6 +1351,133 @@ document.addEventListener('submit', e => {
   }
 });
 
+/* ---------- notas ---------- */
+const NOTE_COLORS = {padrao:'Padrão', verde:'Verde', amarelo:'Amarelo', rosa:'Rosa', azul:'Azul', lilas:'Lilás'};
+const BOX = '⬜', TICK = '✅';
+function fmtNoteDate(ts){
+  const d = new Date(ts), t = todayStr(), ds = ymd(d);
+  if(ds === t) return `hoje, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if(ds === addDays(t, -1)) return 'ontem';
+  return `${d.getDate()} ${MONTHS_S[d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}`;
+}
+const checkCount = body => ({total:(body.match(/^[⬜✅] /gm) || []).length, done:(body.match(/^✅ /gm) || []).length});
+function noteCard(n){
+  const lines = (n.body || '').split('\n').filter(l => l.trim());
+  const title = n.title.trim() || lines.shift() || 'Nota sem título';
+  const c = checkCount(n.body || '');
+  return `<button class="note nc-${n.color || 'padrao'}" data-act="open-note" data-nid="${n.id}">
+    <b>${n.pinned ? '📌 ' : ''}${esc(title)}</b>${lines.length ? `<p>${lines.slice(0,6).map(esc).join('<br>')}</p>` : ''}
+    <small>${fmtNoteDate(n.updated)}${c.total ? ` · ${c.done}/${c.total} ✓` : ''}</small></button>`;
+}
+function noteResults(){
+  const q = (ui.nq || '').trim().toLowerCase();
+  const list = state.notes.filter(n => !q || `${n.title} ${n.body}`.toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
+  const pinned = list.filter(n => n.pinned), rest = list.filter(n => !n.pinned);
+  if(!list.length) return q ? `<div class="card" style="margin-top:12px"><div class="empty"><b>🔍</b>Nenhuma nota com “${esc(ui.nq.trim())}”.</div></div>`
+    : `<div class="card" style="margin-top:12px"><div class="empty"><b>📝</b>Nenhuma nota ainda.<br>Toque no + para escrever a primeira.</div></div>`;
+  return (pinned.length ? `<div class="section-title">Fixadas</div><div class="notes-grid">${pinned.map(noteCard).join('')}</div>` : '')
+    + (rest.length ? `<div class="section-title">${pinned.length ? 'Outras notas' : 'Notas'} <small>${rest.length}</small></div><div class="notes-grid">${rest.map(noteCard).join('')}</div>` : '');
+}
+function renderNotes(){
+  return `<input class="search" id="noteSearch" type="search" placeholder="🔍 Buscar nas notas" value="${esc(ui.nq || '')}" autocomplete="off">
+    <div id="noteResults">${noteResults()}</div>`;
+}
+
+let noteTimer;
+const curNote = () => state.notes.find(n => n.id === ui.note);
+function autosizeNote(){ const ta = $('#noteBody'); ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+function noteInfo(){ const c = checkCount($('#noteBody').value); $('#noteInfo').textContent = c.total ? `${c.done} de ${c.total} feitos` : ''; }
+function paintNote(n){
+  $('#noteView').className = `fullcal noteview nc-${n.color || 'padrao'}`;
+  $('#notePin').classList.toggle('on', !!n.pinned);
+  $('#noteColors').innerHTML = Object.entries(NOTE_COLORS).map(([k, l]) =>
+    `<button class="nc-${k} ${(n.color||'padrao') === k ? 'on' : ''}" data-act="note-setcolor" data-c="${k}" aria-label="${l}"></button>`).join('');
+}
+function openNote(id, focus){
+  const n = state.notes.find(x => x.id === id); if(!n) return;
+  ui.note = id;
+  $('#noteTitle').value = n.title; $('#noteBody').value = n.body;
+  $('#noteColors').hidden = true; $('#noteStatus').textContent = n.updated ? `Editada ${fmtNoteDate(n.updated)}` : '';
+  paintNote(n); $('#noteView').hidden = false; document.body.classList.add('lock2');
+  autosizeNote(); noteInfo(); $('.nv-body').scrollTop = 0;
+  if(focus) $(focus).focus();
+}
+function saveNote(){
+  clearTimeout(noteTimer);
+  const n = curNote(); if(!n) return;
+  const title = $('#noteTitle').value, body = $('#noteBody').value;
+  if(title === n.title && body === n.body) return;
+  n.title = title; n.body = body; n.updated = Date.now();
+  save(); $('#noteStatus').textContent = 'Salvo ✓';
+}
+const saveNoteSoon = () => { clearTimeout(noteTimer); $('#noteStatus').textContent = 'Salvando…'; noteTimer = setTimeout(saveNote, 500); };
+function closeNote(){
+  saveNote();
+  const n = curNote();
+  if(n && !n.title.trim() && !n.body.trim()) state.notes = state.notes.filter(x => x !== n), save();  // nota vazia não fica salva
+  ui.note = null; $('#noteView').hidden = true; document.body.classList.remove('lock2');
+  $('#noteTitle').blur(); $('#noteBody').blur(); render();
+}
+function newNote(){
+  const n = {id:uid(), title:'', body:'', color:'padrao', pinned:false, created:Date.now(), updated:Date.now()};
+  state.notes.push(n); openNote(n.id, '#noteTitle');
+}
+/* lista de tarefas dentro da nota: ⬜ item / ✅ item */
+function toggleLine(ta, mode){
+  const v = ta.value, pos = ta.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1, line = v.slice(ls);
+  let nv, d = 0;
+  if(line.startsWith(BOX + ' ')){ nv = v.slice(0, ls) + TICK + v.slice(ls + 1); }
+  else if(line.startsWith(TICK + ' ')){ if(mode === 'tap'){ nv = v.slice(0, ls) + BOX + v.slice(ls + 1); } else { nv = v.slice(0, ls) + v.slice(ls + 2); d = -2; } }
+  else { if(mode === 'tap') return false; nv = v.slice(0, ls) + BOX + ' ' + v.slice(ls); d = 2; }
+  ta.value = nv; const np = Math.max(ls, pos + d); ta.setSelectionRange(np, np);
+  autosizeNote(); noteInfo(); saveNoteSoon(); return true;
+}
+
+document.addEventListener('input', e => {
+  if(e.target.id === 'noteSearch'){ ui.nq = e.target.value; $('#noteResults').innerHTML = noteResults(); }
+  if(e.target.id === 'noteTitle' || e.target.id === 'noteBody'){ if(e.target.id === 'noteBody'){ autosizeNote(); noteInfo(); } saveNoteSoon(); }
+});
+document.addEventListener('keydown', e => {
+  const ta = e.target;
+  if(ta.id === 'noteTitle' && e.key === 'Enter'){ e.preventDefault(); $('#noteBody').focus(); return; }
+  if(ta.id !== 'noteBody' || e.key !== 'Enter' || e.shiftKey) return;
+  // Enter numa linha de lista continua a lista; numa linha vazia de lista, sai dela
+  const v = ta.value, pos = ta.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1, line = v.slice(ls, pos);
+  if(!/^[⬜✅] /.test(line)) return;
+  e.preventDefault();
+  if(line.trim().length <= 1){ ta.value = v.slice(0, ls) + v.slice(pos); ta.setSelectionRange(ls, ls); }
+  else { const ins = '\n' + BOX + ' '; ta.value = v.slice(0, pos) + ins + v.slice(ta.selectionEnd); ta.setSelectionRange(pos + ins.length, pos + ins.length); }
+  autosizeNote(); noteInfo(); saveNoteSoon();
+});
+// tocar no quadradinho marca/desmarca o item
+document.addEventListener('click', e => {
+  const ta = e.target; if(ta.id !== 'noteBody') return;
+  const v = ta.value, pos = ta.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1;
+  if(pos - ls <= 2 && /^[⬜✅] /.test(v.slice(ls, ls + 2))) toggleLine(ta, 'tap');
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  switch(el.dataset.act){
+    case 'open-note': openNote(el.dataset.nid); break;
+    case 'note-close': closeNote(); break;
+    case 'note-pin': { const n = curNote(); if(n){ n.pinned = !n.pinned; save(); paintNote(n); toast(n.pinned ? 'Fixada no topo 📌' : 'Desafixada'); } break; }
+    case 'note-color': $('#noteColors').hidden = !$('#noteColors').hidden; break;
+    case 'note-setcolor': { const n = curNote(); if(n){ n.color = el.dataset.c; save(); paintNote(n); } break; }
+    case 'note-del': {
+      const n = curNote(); if(!n) break;
+      if(!(n.title.trim() || n.body.trim()) || confirm('Excluir esta nota? Não dá para desfazer.')){
+        clearTimeout(noteTimer); state.notes = state.notes.filter(x => x !== n); save();
+        ui.note = null; $('#noteView').hidden = true; document.body.classList.remove('lock2'); render(); toast('Nota excluída');
+      }
+      break; }
+    case 'note-check': { const ta = $('#noteBody'); if(document.activeElement !== ta) ta.focus(); toggleLine(ta, 'button'); break; }
+  }
+});
+// o botão de lista não tira o foco do texto (o teclado continua aberto)
+document.addEventListener('pointerdown', e => { if(e.target.closest('[data-act=note-check]')) e.preventDefault(); });
+// se o app for fechado com a nota aberta, salva antes
+document.addEventListener('visibilitychange', () => { if(document.hidden && ui.note) saveNote(); });
+
 /* ---------- saudação e mensagem do dia (horário de Brasília) ---------- */
 function brNow(){
   try{
@@ -1387,7 +1560,7 @@ function specialDay(dateStr){
 function render(){
   const br = brNow();
   $('#greeting').textContent = `${greeting(br.hour)}, Júlia 💚`;
-  const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, saude:renderHealth, financas:renderFinance, historico:renderHistory};
+  const views = {agenda:renderAgenda, proximos:renderUpcoming, tarefas:renderTasks, notas:renderNotes, saude:renderHealth, financas:renderFinance, historico:renderHistory};
   if(!views[ui.tab]) ui.tab = 'agenda';
   const sp = specialDay(br.date);
   const love = sp
@@ -1397,7 +1570,7 @@ function render(){
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   $('#fab').style.display = ui.tab === 'tarefas' ? 'none' : '';
   if(ui.full) renderFull(true);
-  $('#fab').setAttribute('aria-label', ui.tab === 'financas' ? 'Novo lançamento' : ui.tab === 'saude' ? 'Registrar o dia' : 'Novo evento');
+  $('#fab').setAttribute('aria-label', ui.tab === 'financas' ? 'Novo lançamento' : ui.tab === 'saude' ? 'Registrar o dia' : ui.tab === 'notas' ? 'Nova nota' : 'Novo evento');
 }
 
 /* ---------- painel inferior ---------- */
@@ -1518,7 +1691,7 @@ function settingsSheet(){
   return `<h2>Ajustes</h2>
     <button class="menu-btn" data-act="appearance">🎨<div>Aparência<small>Cor do app e tema claro ou escuro</small></div></button>
     <button class="menu-btn" data-act="cats">🏷️<div>Categorias<small>Criar e editar categorias com nome, emoji e cor</small></div></button>
-    <button class="menu-btn" data-act="export">💾<div>Fazer backup<small>Salva um arquivo com tudo (${nEv} eventos, ${nT} tarefas, ${nB} lançamentos)</small></div></button>
+    <button class="menu-btn" data-act="export">💾<div>Fazer backup<small>Salva um arquivo com tudo (${nEv} eventos, ${nT} tarefas, ${state.notes.length} notas, ${nB} lançamentos)</small></div></button>
     <button class="menu-btn" data-act="import">📥<div>Restaurar backup<small>Carrega um arquivo de backup salvo antes</small></div></button>
     <div class="about">
       <b>Dica:</b> faça um backup de vez em quando e guarde no iCloud Drive (app Arquivos). Assim nada se perde se você trocar de celular.
@@ -1531,7 +1704,7 @@ function settingsSheet(){
 /* ---------- backup ---------- */
 async function exportData(){
   const json = JSON.stringify({app:'JujuApp', exportedAt:new Date().toISOString(), events:state.events, tasks:state.tasks, bills:state.bills,
-    cats:state.cats, health:state.health, theme:state.theme}, null, 2);
+    cats:state.cats, health:state.health, theme:state.theme, notes:state.notes}, null, 2);
   const name = `jujuapp-backup-${todayStr()}.json`;
   const file = new File([json], name, {type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
@@ -1579,6 +1752,7 @@ document.addEventListener('click', e => {
     case 'year': ui.hy = +el.dataset.y; render(); break;
     case 'new-ev':
       if(ui.tab === 'saude'){ openSheet(hLogForm(todayStr())); break; }
+      if(ui.tab === 'notas'){ newNote(); break; }
       openSheet(ui.tab === 'financas' ? billForm(null) : eventForm(null)); if(ui.tab === 'financas') syncBillForm($('#billForm')); break;
     case 'new-cat-ev': {
       // guarda o que já foi digitado no evento para voltar a ele depois de criar a categoria
