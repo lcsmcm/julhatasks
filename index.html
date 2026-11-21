@@ -224,31 +224,21 @@ body.lock2{overflow:hidden}
 .note p{margin:0;font-size:13px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .note small{margin-top:auto;font-size:11px;color:var(--muted);font-weight:600}
 .note{cursor:pointer}
-.note-top{display:flex;align-items:flex-start;gap:8px}
-.note-top b{flex:1;min-width:0}
-.note .check{width:24px;height:24px;margin:-2px -2px 0 0;background:var(--surface)}
-.note.done .check{background:var(--green)}
-.note.done .check::after{left:7px;top:2px}
-.note.done b{text-decoration:line-through;opacity:.55}
-.note.done p{opacity:.6}
-.nv-title{display:flex;align-items:center;gap:12px}
-.nv-title #noteTitle{flex:1;min-width:0}
-.nv-title.done #noteTitle{text-decoration:line-through;opacity:.55}
-.nv-list{padding:2px 0 8px}
-.nl-item{display:flex;align-items:flex-start;gap:12px;padding:5px 0}
+.nprev{display:flex;flex-direction:column;gap:1px;font-size:13px;line-height:1.45;color:var(--muted);min-width:0}
+.nprev div{display:flex;gap:6px;align-items:center;min-width:0}
+.nprev span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.nprev .pi::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor}
+.nprev .pi.on span{text-decoration:line-through}
+.nprev .pi.on::before{background:var(--green);border-color:var(--green)}
+.nl-item{display:flex;align-items:flex-start;gap:12px;padding:4px 0}
 .nl-item .check{width:24px;height:24px;margin-top:1px;background:none}
 .nl-item.done .check{background:var(--green)}
 .nl-item.done .check::after{left:7px;top:2px}
-.nl-text{flex:1;min-width:0;display:block;border:none;background:none;outline:none;resize:none;font:inherit;font-size:17px;line-height:1.5;padding:0;color:var(--text);overflow:hidden}
-.nl-item.done .nl-text{text-decoration:line-through;color:var(--muted)}
-.nl-add{border:none;background:none;color:var(--green);font-weight:650;font-size:15px;padding:8px 0 8px 36px}
-.noteview.has-list #noteBody{min-height:1.6em}
-.nprev{list-style:none;margin:0;padding:0;font-size:13px;line-height:1.45;color:var(--muted)}
-.nprev li{display:flex;gap:6px;align-items:center}
-.nprev li span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.nprev li::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor}
-.nprev li.on span{text-decoration:line-through}
-.nprev li.on::before{background:var(--green);border-color:var(--green)}
+.nb{flex:1;min-width:0;display:block;width:100%;border:none;background:none;outline:none;resize:none;font:inherit;font-size:17px;line-height:1.55;padding:0;color:var(--text);overflow:hidden}
+.nl-item.done .nb{text-decoration:line-through;color:var(--muted)}
+.nb-text{margin:2px 0}
+.nb-text.last{min-height:35vh}
+.nb-text.empty:not(.last):not(:focus){height:6px!important}
 .nc-verde{background:var(--green-soft)!important}
 .nc-amarelo{background:var(--nc-amarelo)!important}
 .nc-rosa{background:var(--nc-rosa)!important}
@@ -264,7 +254,7 @@ body.lock2{overflow:hidden}
 .nv-colors button.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
 .nv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px 40vh;max-width:560px;width:100%;margin:0 auto}
 #noteTitle{display:block;width:100%;border:none;background:none;outline:none;font-size:24px;font-weight:750;letter-spacing:-.02em;padding:8px 0;color:var(--text)}
-#noteBody{display:block;width:100%;border:none;background:none;outline:none;resize:none;font-size:17px;line-height:1.55;min-height:50vh;padding:0;color:var(--text);overflow:hidden}
+
 /* categorias e aparência */
 .cat-emoji{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px}
 .chev{flex:none;color:var(--muted);font-size:22px;line-height:1}
@@ -423,9 +413,8 @@ try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s &
   <div class="nv-colors" id="noteColors" hidden></div>
   <div class="nv-tools"><button data-act="note-check">☑️ Checklist</button><span class="nv-status" id="noteInfo"></span></div>
   <div class="nv-body">
-    <div class="nv-title" id="noteTitleRow"><button class="check" data-act="note-done" aria-label="Marcar nota como concluída"></button><input id="noteTitle" placeholder="Título" maxlength="120" autocomplete="off"></div>
-    <textarea id="noteBody" placeholder="Escreva o que quiser…"></textarea>
-    <div class="nv-list" id="noteList"></div>
+    <input id="noteTitle" placeholder="Título" maxlength="120" autocomplete="off">
+    <div id="noteBlocks"></div>
   </div>
 </div>
 
@@ -475,11 +464,14 @@ function normalize(s){
   return {
     events: arr(s.events), tasks: arr(s.tasks), bills: arr(s.bills), cats,
     notes: arr(s.notes).filter(n => n && n.id).map(n => {
-      if(!Array.isArray(n.items)){
-        const items = [], keep = [];
-        String(n.body || '').split('\n').forEach(l => { const m = /^([⬜✅]) ?(.*)$/.exec(l);
-          if(m) items.push({id: Math.random().toString(36).slice(2, 10), text: m[2], done: m[1] === '✅'}); else keep.push(l); });
-        n.items = items; if(items.length) n.body = keep.join('\n').replace(/\n+$/, '');
+      if(!Array.isArray(n.blocks)){
+        const B = [], rid = () => Math.random().toString(36).slice(2, 10);
+        const push = (t, text, done) => { const last = B[B.length - 1];
+          if(t === 'text' && last && last.t === 'text') last.text += '\n' + text;
+          else B.push(t === 'text' ? {id: rid(), t, text} : {id: rid(), t, text, done: !!done}); };
+        String(n.body || '').split('\n').forEach(l => { const m = /^([⬜✅]) ?(.*)$/.exec(l); if(m) push('item', m[2], m[1] === '✅'); else push('text', l); });
+        (Array.isArray(n.items) ? n.items : []).forEach(i => push('item', String(i.text || ''), i.done));
+        n.blocks = B;
       }
       return n; }),
     health: {days: h.days && typeof h.days === 'object' ? h.days : {}, cycleLen: +h.cycleLen || 28, periodLen: +h.periodLen || 5, waterGoal: +h.waterGoal || 2250},
@@ -1387,32 +1379,34 @@ document.addEventListener('submit', e => {
 
 /* ---------- notas ---------- */
 const NOTE_COLORS = {padrao:'Padrão', verde:'Verde', amarelo:'Amarelo', rosa:'Rosa', azul:'Azul', lilas:'Lilás'};
-const BOX = '⬜', TICK = '✅';
 function fmtNoteDate(ts){
   const d = new Date(ts), t = todayStr(), ds = ymd(d);
   if(ds === t) return `hoje, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   if(ds === addDays(t, -1)) return 'ontem';
   return `${d.getDate()} ${MONTHS_S[d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}`;
 }
-const checkCount = n => { const it = (n && n.items) || []; return {total: it.length, done: it.filter(i => i.done).length}; };
+/* a nota é uma sequência de blocos: texto livre ou item de checklist (com bolinha) */
+const blocks = n => n.blocks || (n.blocks = [{id: uid(), t: 'text', text: ''}]);
+const checkCount = n => { const it = n ? blocks(n).filter(b => b.t === 'item') : []; return {total: it.length, done: it.filter(i => i.done).length}; };
+const noteText = n => `${n.title} ${blocks(n).map(b => b.text).join(' ')}`;
 function noteCard(n){
-  const lines = (n.body || '').split('\n').filter(l => l.trim());
-  const items = (n.items || []).filter(i => i.text.trim());
-  const title = n.title.trim() || lines.shift() || (items[0] && items[0].text) || 'Nota sem título';
+  const rows = [];
+  blocks(n).forEach(b => { if(b.t === 'item'){ if(b.text.trim()) rows.push(b); } else b.text.split('\n').forEach(l => { if(l.trim()) rows.push({text: l}); }); });
+  let title = n.title.trim(); if(!title){ const f = rows.shift(); title = f ? f.text : 'Nota sem título'; }
   const c = checkCount(n);
-  return `<div class="note nc-${n.color || 'padrao'} ${n.done ? 'done' : ''}" role="button" tabindex="0" data-act="open-note" data-nid="${n.id}">
-    <div class="note-top"><b>${n.pinned && !n.done ? '📌 ' : ''}${esc(title)}</b><button class="check" data-act="note-done" data-nid="${n.id}" aria-label="${n.done ? 'Desmarcar nota' : 'Marcar nota como concluída'}"></button></div>${lines.length ? `<p>${lines.slice(0, items.length ? 3 : 6).map(esc).join('<br>')}</p>` : ''}${items.length ? `<ul class="nprev">${items.slice(0, lines.length ? 3 : 5).map(i => `<li class="${i.done ? 'on' : ''}"><span>${esc(i.text)}</span></li>`).join('')}${items.length > (lines.length ? 3 : 5) ? '<li style="list-style:none">…</li>' : ''}</ul>` : ''}
+  return `<div class="note nc-${n.color || 'padrao'}" role="button" tabindex="0" data-act="open-note" data-nid="${n.id}">
+    <b>${n.pinned ? '📌 ' : ''}${esc(title)}</b>${rows.length ? `<div class="nprev">${rows.slice(0, 6).map(r =>
+      `<div class="${r.t === 'item' ? 'pi' : ''} ${r.done ? 'on' : ''}"><span>${esc(r.text)}</span></div>`).join('')}</div>` : ''}
     <small>${fmtNoteDate(n.updated)}${c.total ? ` · ${c.done}/${c.total} ✓` : ''}</small></div>`;
 }
 function noteResults(){
   const q = (ui.nq || '').trim().toLowerCase();
-  const list = state.notes.filter(n => !q || `${n.title} ${n.body} ${(n.items || []).map(i => i.text).join(' ')}`.toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
-  const pinned = list.filter(n => n.pinned && !n.done), rest = list.filter(n => !n.pinned && !n.done), done = list.filter(n => n.done);
+  const list = state.notes.filter(n => !q || noteText(n).toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
+  const pinned = list.filter(n => n.pinned), rest = list.filter(n => !n.pinned);
   if(!list.length) return q ? `<div class="card" style="margin-top:12px"><div class="empty"><b>🔍</b>Nenhuma nota com “${esc(ui.nq.trim())}”.</div></div>`
     : `<div class="card" style="margin-top:12px"><div class="empty"><b>📝</b>Nenhuma nota ainda.<br>Toque no + para escrever a primeira.</div></div>`;
   return (pinned.length ? `<div class="section-title">Fixadas</div><div class="notes-grid">${pinned.map(noteCard).join('')}</div>` : '')
-    + (rest.length ? `<div class="section-title">${pinned.length ? 'Outras notas' : 'Notas'} <small>${rest.length}</small></div><div class="notes-grid">${rest.map(noteCard).join('')}</div>` : '')
-    + (done.length ? `<div class="section-title">✅ Concluídas <small>${done.length}</small></div><div class="notes-grid">${done.map(noteCard).join('')}</div>` : '');
+    + (rest.length ? `<div class="section-title">${pinned.length ? 'Outras notas' : 'Notas'} <small>${rest.length}</small></div><div class="notes-grid">${rest.map(noteCard).join('')}</div>` : '');
 }
 function renderNotes(){
   return `<input class="search" id="noteSearch" type="search" placeholder="🔍 Buscar nas notas" value="${esc(ui.nq || '')}" autocomplete="off">
@@ -1421,92 +1415,128 @@ function renderNotes(){
 
 let noteTimer, noteDirty = false;
 const curNote = () => state.notes.find(n => n.id === ui.note);
-function autosizeNote(){ const ta = $('#noteBody'); ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+const sizeTa = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
 function noteInfo(){ const c = checkCount(curNote()); $('#noteInfo').textContent = c.total ? `${c.done} de ${c.total} feitos` : ''; }
 function paintNote(n){
   $('#noteView').className = `fullcal noteview nc-${n.color || 'padrao'}`;
   $('#notePin').classList.toggle('on', !!n.pinned);
-  $('#noteTitleRow').classList.toggle('done', !!n.done);
-  $('#noteView').classList.toggle('has-list', !!(n.items || []).length);
   $('#noteColors').innerHTML = Object.entries(NOTE_COLORS).map(([k, l]) =>
     `<button class="nc-${k} ${(n.color||'padrao') === k ? 'on' : ''}" data-act="note-setcolor" data-c="${k}" aria-label="${l}"></button>`).join('');
+}
+/* sempre começa e termina com um bloco de texto (para escrever acima e abaixo da checklist) */
+function fixBlocks(n){
+  const out = [];
+  blocks(n).forEach(b => { const last = out[out.length - 1];
+    if(b.t === 'text' && last && last.t === 'text') last.text = !last.text ? b.text : !b.text ? last.text : last.text + '\n' + b.text;
+    else out.push(b); });
+  if(!out.length || out[0].t !== 'text') out.unshift({id: uid(), t: 'text', text: ''});
+  if(out[out.length - 1].t !== 'text') out.push({id: uid(), t: 'text', text: ''});
+  n.blocks = out;
+}
+function renderBlocks(n, focusId, caret){
+  fixBlocks(n);
+  const B = n.blocks, solo = B.length === 1;
+  $('#noteBlocks').innerHTML = B.map((b, i) => b.t === 'item'
+    ? `<div class="nl-item ${b.done ? 'done' : ''}"><button class="check" data-act="nitem-toggle" data-bid="${b.id}" aria-label="${b.done ? 'Desmarcar' : 'Marcar'} item"></button><textarea class="nb nl-text" rows="1" data-bid="${b.id}" enterkeyhint="next">${esc(b.text)}</textarea></div>`
+    : `<textarea class="nb nb-text ${i === B.length - 1 ? 'last' : ''} ${b.text ? '' : 'empty'}" rows="1" data-bid="${b.id}" ${solo ? 'placeholder="Escreva o que quiser…"' : ''}>${esc(b.text)}</textarea>`).join('');
+  $('#noteBlocks').querySelectorAll('.nb').forEach(sizeTa);
+  noteInfo();
+  if(focusId){ const t = $('#noteBlocks').querySelector(`.nb[data-bid="${focusId}"]`);
+    if(t){ t.focus(); const p = caret == null ? t.value.length : Math.min(caret, t.value.length); t.setSelectionRange(p, p); } }
+}
+const changed = () => { noteDirty = true; saveNoteSoon(); };
+/* item vira linha de texto normal (juntando com o texto de cima e de baixo) */
+function itemToText(n, i){
+  const B = n.blocks, it = B[i], prev = B[i - 1];
+  const blk = {id: uid(), t: 'text', text: it.text}; let caret = 0;
+  if(prev && prev.t === 'text'){ if(prev.text){ caret = prev.text.length + 1; blk.text = prev.text + '\n' + blk.text; } B.splice(i - 1, 2, blk); i--; }
+  else B.splice(i, 1, blk);
+  const nx = B[i + 1];
+  if(nx && nx.t === 'text'){ if(nx.text) blk.text += '\n' + nx.text; B.splice(i + 1, 1); }
+  return {id: blk.id, caret};
+}
+/* botão Checklist: a linha onde está o cursor vira item (ou volta a ser texto) */
+function toggleChecklist(){
+  const n = curNote(); if(!n) return;
+  const a = document.activeElement, B = blocks(n);
+  const i = a && a.dataset && a.dataset.bid ? B.findIndex(b => b.id === a.dataset.bid) : -1;
+  if(i >= 0 && B[i].t === 'item'){ const r = itemToText(n, i); changed(); renderBlocks(n, r.id, r.caret + B.find(b => b.id === r.id).text.slice(r.caret).split('\n')[0].length); return; }
+  if(i >= 0){
+    const v = a.value, pos = a.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1, le = v.indexOf('\n', pos);
+    const before = v.slice(0, Math.max(0, ls - 1)), line = v.slice(ls, le < 0 ? v.length : le), after = le < 0 ? '' : v.slice(le + 1);
+    const item = {id: uid(), t: 'item', text: line, done: false}, parts = [];
+    if(ls > 0) parts.push({id: B[i].id, t: 'text', text: before});
+    parts.push(item);
+    if(after) parts.push({id: uid(), t: 'text', text: after});
+    B.splice(i, 1, ...parts); changed(); renderBlocks(n, item.id); return;
+  }
+  // sem cursor: começa uma checklist no fim da nota
+  const item = {id: uid(), t: 'item', text: '', done: false}, last = B[B.length - 1];
+  if(last && last.t === 'text' && !last.text) B.splice(B.length - 1, 0, item); else B.push(item);
+  changed(); renderBlocks(n, item.id);
 }
 function openNote(id, focus){
   const n = state.notes.find(x => x.id === id); if(!n) return;
   ui.note = id;
-  $('#noteTitle').value = n.title; $('#noteBody').value = n.body;
+  $('#noteTitle').value = n.title;
   $('#noteColors').hidden = true; $('#noteStatus').textContent = n.updated ? `Editada ${fmtNoteDate(n.updated)}` : '';
   paintNote(n); $('#noteView').hidden = false; document.body.classList.add('lock2');
-  autosizeNote(); renderList(n); $('.nv-body').scrollTop = 0;
+  renderBlocks(n); $('.nv-body').scrollTop = 0;
   if(focus) $(focus).focus();
 }
 function saveNote(){
   clearTimeout(noteTimer);
   const n = curNote(); if(!n) return;
-  const title = $('#noteTitle').value, body = $('#noteBody').value;
-  if(title === n.title && body === n.body && !noteDirty) return;
-  noteDirty = false; n.title = title; n.body = body; n.updated = Date.now();
+  const title = $('#noteTitle').value;
+  if(title === n.title && !noteDirty) return;
+  noteDirty = false; n.title = title; n.updated = Date.now();
   save(); $('#noteStatus').textContent = 'Salvo ✓';
 }
 const saveNoteSoon = () => { clearTimeout(noteTimer); $('#noteStatus').textContent = 'Salvando…'; noteTimer = setTimeout(saveNote, 500); };
 function closeNote(){
   saveNote();
   const n = curNote();
-  if(n){ const k = (n.items || []).length; n.items = (n.items || []).filter(i => i.text.trim()); if(n.items.length !== k) save(); }  // itens vazios somem
-  if(n && !n.title.trim() && !n.body.trim() && !n.items.length) state.notes = state.notes.filter(x => x !== n), save();  // nota vazia não fica salva
+  if(n){ const k = blocks(n).length; n.blocks = n.blocks.filter(b => b.t !== 'item' || b.text.trim()); fixBlocks(n); if(n.blocks.length !== k) save(); }  // itens vazios somem
+  if(n && !n.title.trim() && !n.blocks.some(b => b.text.trim())) state.notes = state.notes.filter(x => x !== n), save();  // nota vazia não fica salva
   ui.note = null; $('#noteView').hidden = true; document.body.classList.remove('lock2');
-  $('#noteTitle').blur(); $('#noteBody').blur(); render();
+  if(document.activeElement) document.activeElement.blur(); render();
 }
 function newNote(){
-  const n = {id:uid(), title:'', body:'', items:[], color:'padrao', pinned:false, created:Date.now(), updated:Date.now()};
+  const n = {id:uid(), title:'', blocks:[{id: uid(), t: 'text', text: ''}], color:'padrao', pinned:false, created:Date.now(), updated:Date.now()};
   state.notes.push(n); openNote(n.id, '#noteTitle');
-}
-/* checklist da nota (estilo Notas do iPhone): cada item tem uma bolinha para marcar */
-const sizeItem = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
-function renderList(n, focusId, caret){
-  const L = $('#noteList'), it = n.items || (n.items = []);
-  $('#noteView').classList.toggle('has-list', it.length > 0); autosizeNote();
-  L.innerHTML = it.map(i => `<div class="nl-item ${i.done ? 'done' : ''}"><button class="check" data-act="nitem-toggle" data-iid="${i.id}" aria-label="${i.done ? 'Desmarcar' : 'Marcar'} item"></button><textarea class="nl-text" rows="1" data-iid="${i.id}" placeholder="Item" enterkeyhint="next">${esc(i.text)}</textarea></div>`).join('')
-    + (it.length ? '<button class="nl-add" data-act="nitem-add">＋ Novo item</button>' : '');
-  L.querySelectorAll('.nl-text').forEach(sizeItem);
-  noteInfo();
-  if(focusId){ const t = L.querySelector(`.nl-text[data-iid="${focusId}"]`); if(t){ t.focus(); const p = caret == null ? t.value.length : caret; t.setSelectionRange(p, p); } }
-}
-function addItem(afterId, text){
-  const n = curNote(); if(!n) return;
-  const it = {id: uid(), text: text || '', done: false};
-  const idx = afterId ? n.items.findIndex(i => i.id === afterId) : -1;
-  if(idx >= 0) n.items.splice(idx + 1, 0, it); else n.items.push(it);
-  noteDirty = true; saveNoteSoon(); renderList(n, it.id, 0);
 }
 
 document.addEventListener('input', e => {
-  if(e.target.id === 'noteSearch'){ ui.nq = e.target.value; $('#noteResults').innerHTML = noteResults(); }
-  if(e.target.id === 'noteTitle' || e.target.id === 'noteBody'){ if(e.target.id === 'noteBody') autosizeNote(); saveNoteSoon(); }
-  if(e.target.classList && e.target.classList.contains('nl-text')){
-    const n = curNote(), it = n && n.items.find(x => x.id === e.target.dataset.iid);
-    if(it){ if(e.target.value.includes('\n')) e.target.value = e.target.value.replace(/\n/g, ' '); it.text = e.target.value; sizeItem(e.target); noteDirty = true; saveNoteSoon(); }
+  const t = e.target;
+  if(t.id === 'noteSearch'){ ui.nq = t.value; $('#noteResults').innerHTML = noteResults(); }
+  if(t.id === 'noteTitle') saveNoteSoon();
+  if(t.classList && t.classList.contains('nb')){
+    const n = curNote(), b = n && blocks(n).find(x => x.id === t.dataset.bid); if(!b) return;
+    if(b.t === 'item' && t.value.includes('\n')) t.value = t.value.replace(/\n/g, ' ');
+    b.text = t.value; t.classList.toggle('empty', b.t === 'text' && !b.text); sizeTa(t); changed();
   }
 });
 document.addEventListener('keydown', e => {
   const t = e.target;
-  if(t.id === 'noteTitle' && e.key === 'Enter'){ e.preventDefault(); $('#noteBody').focus(); return; }
-  if(!t.classList || !t.classList.contains('nl-text') || e.isComposing) return;
+  if(t.id === 'noteTitle' && e.key === 'Enter'){ e.preventDefault(); const f = $('#noteBlocks .nb-text'); if(f){ f.focus(); f.setSelectionRange(0, 0); } return; }
+  if(!t.classList || !t.classList.contains('nb') || e.isComposing) return;
   const n = curNote(); if(!n) return;
-  const i = n.items.findIndex(x => x.id === t.dataset.iid); if(i < 0) return;
-  if(e.key === 'Enter' && !e.shiftKey){
+  const B = blocks(n), i = B.findIndex(x => x.id === t.dataset.bid); if(i < 0) return;
+  const b = B[i], atStart = t.selectionStart === 0 && t.selectionEnd === 0;
+  if(b.t === 'item' && e.key === 'Enter' && !e.shiftKey){
     e.preventDefault();
-    if(!t.value.trim()){ n.items.splice(i, 1); noteDirty = true; saveNoteSoon(); renderList(n); return; }  // Enter num item vazio termina a lista
+    if(!t.value.trim()){ const r = itemToText(n, i); changed(); renderBlocks(n, r.id, r.caret); return; }  // Enter num item vazio: sai da checklist
     const pos = t.selectionStart, rest = t.value.slice(t.selectionEnd);
-    n.items[i].text = t.value.slice(0, pos);
-    addItem(n.items[i].id, rest);
-  } else if(e.key === 'Backspace' && t.selectionStart === 0 && t.selectionEnd === 0){
-    const prev = n.items[i - 1];
-    if(t.value && !prev) return;
-    e.preventDefault();
-    n.items.splice(i, 1); noteDirty = true; saveNoteSoon();
-    if(prev){ const L = prev.text.length; prev.text += t.value; renderList(n, prev.id, L); }  // apagar no começo junta com o item de cima
-    else { renderList(n); const b = $('#noteBody'); b.focus(); b.setSelectionRange(b.value.length, b.value.length); }
+    b.text = t.value.slice(0, pos);
+    const it = {id: uid(), t: 'item', text: rest, done: false};
+    B.splice(i + 1, 0, it); changed(); renderBlocks(n, it.id, 0);
+  } else if(e.key === 'Backspace' && atStart){
+    if(b.t === 'item'){ e.preventDefault(); const r = itemToText(n, i); changed(); renderBlocks(n, r.id, r.caret); }  // tira a bolinha da linha
+    else if(B[i - 1] && B[i - 1].t === 'item'){  // junta a 1ª linha do texto com o item de cima
+      e.preventDefault();
+      const prev = B[i - 1], L = prev.text.length, lines = t.value.split('\n');
+      prev.text += lines.shift(); b.text = lines.join('\n'); changed(); renderBlocks(n, prev.id, L);
+    }
   }
 });
 document.addEventListener('click', e => {
@@ -1514,34 +1544,26 @@ document.addEventListener('click', e => {
   switch(el.dataset.act){
     case 'open-note': openNote(el.dataset.nid); break;
     case 'note-close': closeNote(); break;
-    case 'note-done': {
-      const n = el.dataset.nid ? state.notes.find(x => x.id === el.dataset.nid) : curNote(); if(!n) break;
-      n.done = !n.done; save();
-      if(ui.note === n.id) paintNote(n); else render();
-      toast(n.done ? 'Nota concluída ✅' : 'Nota desmarcada');
-      break; }
     case 'note-pin': { const n = curNote(); if(n){ n.pinned = !n.pinned; save(); paintNote(n); toast(n.pinned ? 'Fixada no topo 📌' : 'Desafixada'); } break; }
     case 'note-color': $('#noteColors').hidden = !$('#noteColors').hidden; break;
     case 'note-setcolor': { const n = curNote(); if(n){ n.color = el.dataset.c; save(); paintNote(n); } break; }
     case 'note-del': {
       const n = curNote(); if(!n) break;
-      if(!(n.title.trim() || n.body.trim() || (n.items || []).length) || confirm('Excluir esta nota? Não dá para desfazer.')){
+      if(!(n.title.trim() || blocks(n).some(b => b.text.trim())) || confirm('Excluir esta nota? Não dá para desfazer.')){
         clearTimeout(noteTimer); state.notes = state.notes.filter(x => x !== n); save();
         ui.note = null; $('#noteView').hidden = true; document.body.classList.remove('lock2'); render(); toast('Nota excluída');
       }
       break; }
-    case 'note-check': case 'nitem-add': {
-      const a = document.activeElement;
-      addItem(el.dataset.act === 'note-check' && a && a.classList.contains('nl-text') ? a.dataset.iid : null); break; }
+    case 'note-check': toggleChecklist(); break;
     case 'nitem-toggle': {
-      const n = curNote(), it = n && n.items.find(x => x.id === el.dataset.iid); if(!it) break;
+      const n = curNote(), it = n && blocks(n).find(x => x.id === el.dataset.bid); if(!it) break;
       it.done = !it.done; noteDirty = true; saveNote();
       el.parentElement.classList.toggle('done', it.done); el.setAttribute('aria-label', (it.done ? 'Desmarcar' : 'Marcar') + ' item'); noteInfo();
       break; }
   }
 });
-// o botão de lista não tira o foco do texto (o teclado continua aberto)
-document.addEventListener('pointerdown', e => { if(e.target.closest('[data-act=note-check],[data-act=nitem-add],[data-act=nitem-toggle]')) e.preventDefault(); });
+// o botão Checklist e as bolinhas não tiram o foco do texto (o teclado continua aberto)
+document.addEventListener('pointerdown', e => { if(e.target.closest('[data-act=note-check],[data-act=nitem-toggle]')) e.preventDefault(); });
 // se o app for fechado com a nota aberta, salva antes
 document.addEventListener('visibilitychange', () => { if(document.hidden && ui.note) saveNote(); });
 
