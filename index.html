@@ -234,6 +234,21 @@ body.lock2{overflow:hidden}
 .nv-title{display:flex;align-items:center;gap:12px}
 .nv-title #noteTitle{flex:1;min-width:0}
 .nv-title.done #noteTitle{text-decoration:line-through;opacity:.55}
+.nv-list{padding:2px 0 8px}
+.nl-item{display:flex;align-items:flex-start;gap:12px;padding:5px 0}
+.nl-item .check{width:24px;height:24px;margin-top:1px;background:none}
+.nl-item.done .check{background:var(--green)}
+.nl-item.done .check::after{left:7px;top:2px}
+.nl-text{flex:1;min-width:0;display:block;border:none;background:none;outline:none;resize:none;font:inherit;font-size:17px;line-height:1.5;padding:0;color:var(--text);overflow:hidden}
+.nl-item.done .nl-text{text-decoration:line-through;color:var(--muted)}
+.nl-add{border:none;background:none;color:var(--green);font-weight:650;font-size:15px;padding:8px 0 8px 36px}
+.noteview.has-list #noteBody{min-height:1.6em}
+.nprev{list-style:none;margin:0;padding:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.nprev li{display:flex;gap:6px;align-items:center}
+.nprev li span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.nprev li::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid currentColor}
+.nprev li.on span{text-decoration:line-through}
+.nprev li.on::before{background:var(--green);border-color:var(--green)}
 .nc-verde{background:var(--green-soft)!important}
 .nc-amarelo{background:var(--nc-amarelo)!important}
 .nc-rosa{background:var(--nc-rosa)!important}
@@ -406,10 +421,11 @@ try{ const s = JSON.parse(localStorage.getItem('julhatasks.v1')); applyTheme(s &
     </div>
   </div>
   <div class="nv-colors" id="noteColors" hidden></div>
-  <div class="nv-tools"><button data-act="note-check">✅ Item de lista</button><span class="nv-status" id="noteInfo"></span></div>
+  <div class="nv-tools"><button data-act="note-check">☑️ Checklist</button><span class="nv-status" id="noteInfo"></span></div>
   <div class="nv-body">
     <div class="nv-title" id="noteTitleRow"><button class="check" data-act="note-done" aria-label="Marcar nota como concluída"></button><input id="noteTitle" placeholder="Título" maxlength="120" autocomplete="off"></div>
     <textarea id="noteBody" placeholder="Escreva o que quiser…"></textarea>
+    <div class="nv-list" id="noteList"></div>
   </div>
 </div>
 
@@ -458,7 +474,14 @@ function normalize(s){
   const h = s.health && typeof s.health === 'object' ? s.health : {};
   return {
     events: arr(s.events), tasks: arr(s.tasks), bills: arr(s.bills), cats,
-    notes: arr(s.notes).filter(n => n && n.id),
+    notes: arr(s.notes).filter(n => n && n.id).map(n => {
+      if(!Array.isArray(n.items)){
+        const items = [], keep = [];
+        String(n.body || '').split('\n').forEach(l => { const m = /^([⬜✅]) ?(.*)$/.exec(l);
+          if(m) items.push({id: Math.random().toString(36).slice(2, 10), text: m[2], done: m[1] === '✅'}); else keep.push(l); });
+        n.items = items; if(items.length) n.body = keep.join('\n').replace(/\n+$/, '');
+      }
+      return n; }),
     health: {days: h.days && typeof h.days === 'object' ? h.days : {}, cycleLen: +h.cycleLen || 28, periodLen: +h.periodLen || 5, waterGoal: +h.waterGoal || 2250},
     theme: s.theme && typeof s.theme === 'object' ? s.theme : {accent:'verde', mode:'auto'},
   };
@@ -1371,18 +1394,19 @@ function fmtNoteDate(ts){
   if(ds === addDays(t, -1)) return 'ontem';
   return `${d.getDate()} ${MONTHS_S[d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}`;
 }
-const checkCount = body => ({total:(body.match(/^[⬜✅] /gm) || []).length, done:(body.match(/^✅ /gm) || []).length});
+const checkCount = n => { const it = (n && n.items) || []; return {total: it.length, done: it.filter(i => i.done).length}; };
 function noteCard(n){
   const lines = (n.body || '').split('\n').filter(l => l.trim());
-  const title = n.title.trim() || lines.shift() || 'Nota sem título';
-  const c = checkCount(n.body || '');
+  const items = (n.items || []).filter(i => i.text.trim());
+  const title = n.title.trim() || lines.shift() || (items[0] && items[0].text) || 'Nota sem título';
+  const c = checkCount(n);
   return `<div class="note nc-${n.color || 'padrao'} ${n.done ? 'done' : ''}" role="button" tabindex="0" data-act="open-note" data-nid="${n.id}">
-    <div class="note-top"><b>${n.pinned && !n.done ? '📌 ' : ''}${esc(title)}</b><button class="check" data-act="note-done" data-nid="${n.id}" aria-label="${n.done ? 'Desmarcar nota' : 'Marcar nota como concluída'}"></button></div>${lines.length ? `<p>${lines.slice(0,6).map(esc).join('<br>')}</p>` : ''}
+    <div class="note-top"><b>${n.pinned && !n.done ? '📌 ' : ''}${esc(title)}</b><button class="check" data-act="note-done" data-nid="${n.id}" aria-label="${n.done ? 'Desmarcar nota' : 'Marcar nota como concluída'}"></button></div>${lines.length ? `<p>${lines.slice(0, items.length ? 3 : 6).map(esc).join('<br>')}</p>` : ''}${items.length ? `<ul class="nprev">${items.slice(0, lines.length ? 3 : 5).map(i => `<li class="${i.done ? 'on' : ''}"><span>${esc(i.text)}</span></li>`).join('')}${items.length > (lines.length ? 3 : 5) ? '<li style="list-style:none">…</li>' : ''}</ul>` : ''}
     <small>${fmtNoteDate(n.updated)}${c.total ? ` · ${c.done}/${c.total} ✓` : ''}</small></div>`;
 }
 function noteResults(){
   const q = (ui.nq || '').trim().toLowerCase();
-  const list = state.notes.filter(n => !q || `${n.title} ${n.body}`.toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
+  const list = state.notes.filter(n => !q || `${n.title} ${n.body} ${(n.items || []).map(i => i.text).join(' ')}`.toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
   const pinned = list.filter(n => n.pinned && !n.done), rest = list.filter(n => !n.pinned && !n.done), done = list.filter(n => n.done);
   if(!list.length) return q ? `<div class="card" style="margin-top:12px"><div class="empty"><b>🔍</b>Nenhuma nota com “${esc(ui.nq.trim())}”.</div></div>`
     : `<div class="card" style="margin-top:12px"><div class="empty"><b>📝</b>Nenhuma nota ainda.<br>Toque no + para escrever a primeira.</div></div>`;
@@ -1395,14 +1419,15 @@ function renderNotes(){
     <div id="noteResults">${noteResults()}</div>`;
 }
 
-let noteTimer;
+let noteTimer, noteDirty = false;
 const curNote = () => state.notes.find(n => n.id === ui.note);
 function autosizeNote(){ const ta = $('#noteBody'); ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
-function noteInfo(){ const c = checkCount($('#noteBody').value); $('#noteInfo').textContent = c.total ? `${c.done} de ${c.total} feitos` : ''; }
+function noteInfo(){ const c = checkCount(curNote()); $('#noteInfo').textContent = c.total ? `${c.done} de ${c.total} feitos` : ''; }
 function paintNote(n){
   $('#noteView').className = `fullcal noteview nc-${n.color || 'padrao'}`;
   $('#notePin').classList.toggle('on', !!n.pinned);
   $('#noteTitleRow').classList.toggle('done', !!n.done);
+  $('#noteView').classList.toggle('has-list', !!(n.items || []).length);
   $('#noteColors').innerHTML = Object.entries(NOTE_COLORS).map(([k, l]) =>
     `<button class="nc-${k} ${(n.color||'padrao') === k ? 'on' : ''}" data-act="note-setcolor" data-c="${k}" aria-label="${l}"></button>`).join('');
 }
@@ -1412,61 +1437,77 @@ function openNote(id, focus){
   $('#noteTitle').value = n.title; $('#noteBody').value = n.body;
   $('#noteColors').hidden = true; $('#noteStatus').textContent = n.updated ? `Editada ${fmtNoteDate(n.updated)}` : '';
   paintNote(n); $('#noteView').hidden = false; document.body.classList.add('lock2');
-  autosizeNote(); noteInfo(); $('.nv-body').scrollTop = 0;
+  autosizeNote(); renderList(n); $('.nv-body').scrollTop = 0;
   if(focus) $(focus).focus();
 }
 function saveNote(){
   clearTimeout(noteTimer);
   const n = curNote(); if(!n) return;
   const title = $('#noteTitle').value, body = $('#noteBody').value;
-  if(title === n.title && body === n.body) return;
-  n.title = title; n.body = body; n.updated = Date.now();
+  if(title === n.title && body === n.body && !noteDirty) return;
+  noteDirty = false; n.title = title; n.body = body; n.updated = Date.now();
   save(); $('#noteStatus').textContent = 'Salvo ✓';
 }
 const saveNoteSoon = () => { clearTimeout(noteTimer); $('#noteStatus').textContent = 'Salvando…'; noteTimer = setTimeout(saveNote, 500); };
 function closeNote(){
   saveNote();
   const n = curNote();
-  if(n && !n.title.trim() && !n.body.trim()) state.notes = state.notes.filter(x => x !== n), save();  // nota vazia não fica salva
+  if(n){ const k = (n.items || []).length; n.items = (n.items || []).filter(i => i.text.trim()); if(n.items.length !== k) save(); }  // itens vazios somem
+  if(n && !n.title.trim() && !n.body.trim() && !n.items.length) state.notes = state.notes.filter(x => x !== n), save();  // nota vazia não fica salva
   ui.note = null; $('#noteView').hidden = true; document.body.classList.remove('lock2');
   $('#noteTitle').blur(); $('#noteBody').blur(); render();
 }
 function newNote(){
-  const n = {id:uid(), title:'', body:'', color:'padrao', pinned:false, created:Date.now(), updated:Date.now()};
+  const n = {id:uid(), title:'', body:'', items:[], color:'padrao', pinned:false, created:Date.now(), updated:Date.now()};
   state.notes.push(n); openNote(n.id, '#noteTitle');
 }
-/* lista de tarefas dentro da nota: ⬜ item / ✅ item */
-function toggleLine(ta, mode){
-  const v = ta.value, pos = ta.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1, line = v.slice(ls);
-  let nv, d = 0;
-  if(line.startsWith(BOX + ' ')){ nv = v.slice(0, ls) + TICK + v.slice(ls + 1); }
-  else if(line.startsWith(TICK + ' ')){ if(mode === 'tap'){ nv = v.slice(0, ls) + BOX + v.slice(ls + 1); } else { nv = v.slice(0, ls) + v.slice(ls + 2); d = -2; } }
-  else { if(mode === 'tap') return false; nv = v.slice(0, ls) + BOX + ' ' + v.slice(ls); d = 2; }
-  ta.value = nv; const np = Math.max(ls, pos + d); ta.setSelectionRange(np, np);
-  autosizeNote(); noteInfo(); saveNoteSoon(); return true;
+/* checklist da nota (estilo Notas do iPhone): cada item tem uma bolinha para marcar */
+const sizeItem = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+function renderList(n, focusId, caret){
+  const L = $('#noteList'), it = n.items || (n.items = []);
+  $('#noteView').classList.toggle('has-list', it.length > 0); autosizeNote();
+  L.innerHTML = it.map(i => `<div class="nl-item ${i.done ? 'done' : ''}"><button class="check" data-act="nitem-toggle" data-iid="${i.id}" aria-label="${i.done ? 'Desmarcar' : 'Marcar'} item"></button><textarea class="nl-text" rows="1" data-iid="${i.id}" placeholder="Item" enterkeyhint="next">${esc(i.text)}</textarea></div>`).join('')
+    + (it.length ? '<button class="nl-add" data-act="nitem-add">＋ Novo item</button>' : '');
+  L.querySelectorAll('.nl-text').forEach(sizeItem);
+  noteInfo();
+  if(focusId){ const t = L.querySelector(`.nl-text[data-iid="${focusId}"]`); if(t){ t.focus(); const p = caret == null ? t.value.length : caret; t.setSelectionRange(p, p); } }
+}
+function addItem(afterId, text){
+  const n = curNote(); if(!n) return;
+  const it = {id: uid(), text: text || '', done: false};
+  const idx = afterId ? n.items.findIndex(i => i.id === afterId) : -1;
+  if(idx >= 0) n.items.splice(idx + 1, 0, it); else n.items.push(it);
+  noteDirty = true; saveNoteSoon(); renderList(n, it.id, 0);
 }
 
 document.addEventListener('input', e => {
   if(e.target.id === 'noteSearch'){ ui.nq = e.target.value; $('#noteResults').innerHTML = noteResults(); }
-  if(e.target.id === 'noteTitle' || e.target.id === 'noteBody'){ if(e.target.id === 'noteBody'){ autosizeNote(); noteInfo(); } saveNoteSoon(); }
+  if(e.target.id === 'noteTitle' || e.target.id === 'noteBody'){ if(e.target.id === 'noteBody') autosizeNote(); saveNoteSoon(); }
+  if(e.target.classList && e.target.classList.contains('nl-text')){
+    const n = curNote(), it = n && n.items.find(x => x.id === e.target.dataset.iid);
+    if(it){ if(e.target.value.includes('\n')) e.target.value = e.target.value.replace(/\n/g, ' '); it.text = e.target.value; sizeItem(e.target); noteDirty = true; saveNoteSoon(); }
+  }
 });
 document.addEventListener('keydown', e => {
-  const ta = e.target;
-  if(ta.id === 'noteTitle' && e.key === 'Enter'){ e.preventDefault(); $('#noteBody').focus(); return; }
-  if(ta.id !== 'noteBody' || e.key !== 'Enter' || e.shiftKey) return;
-  // Enter numa linha de lista continua a lista; numa linha vazia de lista, sai dela
-  const v = ta.value, pos = ta.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1, line = v.slice(ls, pos);
-  if(!/^[⬜✅] /.test(line)) return;
-  e.preventDefault();
-  if(line.trim().length <= 1){ ta.value = v.slice(0, ls) + v.slice(pos); ta.setSelectionRange(ls, ls); }
-  else { const ins = '\n' + BOX + ' '; ta.value = v.slice(0, pos) + ins + v.slice(ta.selectionEnd); ta.setSelectionRange(pos + ins.length, pos + ins.length); }
-  autosizeNote(); noteInfo(); saveNoteSoon();
-});
-// tocar no quadradinho marca/desmarca o item
-document.addEventListener('click', e => {
-  const ta = e.target; if(ta.id !== 'noteBody') return;
-  const v = ta.value, pos = ta.selectionStart, ls = v.lastIndexOf('\n', pos - 1) + 1;
-  if(pos - ls <= 2 && /^[⬜✅] /.test(v.slice(ls, ls + 2))) toggleLine(ta, 'tap');
+  const t = e.target;
+  if(t.id === 'noteTitle' && e.key === 'Enter'){ e.preventDefault(); $('#noteBody').focus(); return; }
+  if(!t.classList || !t.classList.contains('nl-text') || e.isComposing) return;
+  const n = curNote(); if(!n) return;
+  const i = n.items.findIndex(x => x.id === t.dataset.iid); if(i < 0) return;
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    if(!t.value.trim()){ n.items.splice(i, 1); noteDirty = true; saveNoteSoon(); renderList(n); return; }  // Enter num item vazio termina a lista
+    const pos = t.selectionStart, rest = t.value.slice(t.selectionEnd);
+    n.items[i].text = t.value.slice(0, pos);
+    addItem(n.items[i].id, rest);
+  } else if(e.key === 'Backspace' && t.selectionStart === 0 && t.selectionEnd === 0){
+    const prev = n.items[i - 1];
+    if(t.value && !prev) return;
+    e.preventDefault();
+    n.items.splice(i, 1); noteDirty = true; saveNoteSoon();
+    if(prev){ const L = prev.text.length; prev.text += t.value; renderList(n, prev.id, L); }  // apagar no começo junta com o item de cima
+    else { renderList(n); const b = $('#noteBody'); b.focus(); b.setSelectionRange(b.value.length, b.value.length); }
+  }
 });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if(!el) return;
@@ -1484,16 +1525,23 @@ document.addEventListener('click', e => {
     case 'note-setcolor': { const n = curNote(); if(n){ n.color = el.dataset.c; save(); paintNote(n); } break; }
     case 'note-del': {
       const n = curNote(); if(!n) break;
-      if(!(n.title.trim() || n.body.trim()) || confirm('Excluir esta nota? Não dá para desfazer.')){
+      if(!(n.title.trim() || n.body.trim() || (n.items || []).length) || confirm('Excluir esta nota? Não dá para desfazer.')){
         clearTimeout(noteTimer); state.notes = state.notes.filter(x => x !== n); save();
         ui.note = null; $('#noteView').hidden = true; document.body.classList.remove('lock2'); render(); toast('Nota excluída');
       }
       break; }
-    case 'note-check': { const ta = $('#noteBody'); if(document.activeElement !== ta) ta.focus(); toggleLine(ta, 'button'); break; }
+    case 'note-check': case 'nitem-add': {
+      const a = document.activeElement;
+      addItem(el.dataset.act === 'note-check' && a && a.classList.contains('nl-text') ? a.dataset.iid : null); break; }
+    case 'nitem-toggle': {
+      const n = curNote(), it = n && n.items.find(x => x.id === el.dataset.iid); if(!it) break;
+      it.done = !it.done; noteDirty = true; saveNote();
+      el.parentElement.classList.toggle('done', it.done); el.setAttribute('aria-label', (it.done ? 'Desmarcar' : 'Marcar') + ' item'); noteInfo();
+      break; }
   }
 });
 // o botão de lista não tira o foco do texto (o teclado continua aberto)
-document.addEventListener('pointerdown', e => { if(e.target.closest('[data-act=note-check]')) e.preventDefault(); });
+document.addEventListener('pointerdown', e => { if(e.target.closest('[data-act=note-check],[data-act=nitem-add],[data-act=nitem-toggle]')) e.preventDefault(); });
 // se o app for fechado com a nota aberta, salva antes
 document.addEventListener('visibilitychange', () => { if(document.hidden && ui.note) saveNote(); });
 
